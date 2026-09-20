@@ -9,6 +9,13 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+
+# `prisma generate` only reads the schema to produce the client — it never connects to
+# the database — but prisma.config.ts's env('DATABASE_URL') throws if the variable isn't
+# set at all. Docker build ARGs aren't automatically visible to RUN as env vars, so a
+# harmless placeholder here is enough; the real DATABASE_URL is only needed at runtime
+# (supplied via docker-compose's `environment:`), never baked into the image.
+ENV DATABASE_URL="postgresql://user:password@localhost:5432/placeholder"
 RUN npx prisma generate
 RUN npm run build
 
