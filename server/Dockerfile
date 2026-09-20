@@ -1,21 +1,16 @@
 # ---- build ----
-# Debian-based (not alpine): several native deps in this tree (bcrypt, unrs-resolver,
-# @prisma/engines, etc.) ship prebuilt binaries for glibc but not musl, so alpine forces
-# a from-source compile that isn't reliable for all of them. glibc avoids that entirely.
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable
-
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
-RUN pnpm exec prisma generate
-RUN pnpm build
+RUN npx prisma generate
+RUN npm run build
 
 # ---- runtime ----
 FROM node:22-bookworm-slim AS runner
