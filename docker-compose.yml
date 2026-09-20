@@ -2,8 +2,15 @@ services:
   server:
     build:
       context: ./server
+    # Bound to localhost only — Nginx (on the host) is the actual public entry point,
+    # reverse-proxying 80/443 to 127.0.0.1:3001. The app itself is never reachable
+    # directly from the internet.
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
+    # Lets the container resolve `host.docker.internal` to the VPS host itself, so it
+    # can reach the native (non-containerized) Postgres install running there.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       PORT: "3001"
       DATABASE_URL: ${DATABASE_URL}
