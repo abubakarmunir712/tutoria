@@ -2,6 +2,10 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# bcrypt has a native addon (node-gyp) — alpine's base image has no compiler toolchain,
+# so `pnpm install` fails building it from source without these.
+RUN apk add --no-cache python3 make g++
+
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
