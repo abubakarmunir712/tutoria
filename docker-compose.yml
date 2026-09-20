@@ -1,0 +1,33 @@
+services:
+  server:
+    build:
+      context: ./server
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
+      # Internal Docker network address — NOT localhost. Resolves via the
+      # `ai-service` container name on the network Compose creates automatically.
+      AI_SERVICE_URL: http://ai-service:8000
+    depends_on:
+      - ai-service
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./pipeline
+    # `expose` (not `ports`) — reachable by other containers on this Compose network,
+    # but not published to the host or the internet. Only `server` ever calls it.
+    expose:
+      - "8000"
+    environment:
+      QDRANT_API_URL: ${QDRANT_API_URL}
+      QDRANT_API_SECRET: ${QDRANT_API_SECRET}
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+    restart: unless-stopped
