@@ -1,0 +1,144 @@
+Homework Buddy AI (Tutoria) — Milestone Structure
+Build: Native Android and iOS (Flutter)
+
+Milestone 1: Foundation, Design Direction, and Authentication — Weeks 1 to 2
+Set up the production Flutter environment for the native Android and iOS targets. Establish the design direction and app flow. Build student registration, login, and profile data layer. Stand up the dashboard scaffold and navigation structure. Ingest and structure the initial curriculum source data ready for the AI pipeline.
+
+Milestone 2: AI Core, Curriculum RAG, and Voice Pipeline — Weeks 3 to 5
+Connect the AI tutor to the curriculum through the Qdrant vector database with a Socratic teaching approach. Build homework upload with OCR, cross-referenced against the curriculum. Deploy real-time voice interaction, speech-to-text for student input and text-to-speech for tutor responses. Run a model and cost review to select the production AI configuration.
+
+Milestone 3: Gamification and Dashboard — Weeks 6 to 7
+Implement XP scoring and streak tracking with backend persistence. Build the rewards screen and complete the student dashboard. Integrate the admin and telemetry dashboard.
+
+Milestone 4: Native Packaging, Cross-Platform QA, and Launch — Week 8
+Package the native Android and iOS builds. Configure native push notifications and store assets. Conduct end-to-end testing across both platforms. Final launch and handover.
+
+Key notes for the developer:
+
+Curriculum source of truth is the official NaCCA documents (Primary 4–6, JHS 1–3, SHS 1–3), not the consultant's summarized files. Hierarchy: Grade → Subject → Strand → Sub-strand → Content Standard → Indicator → Official Indicator Code → Content.
+Language is English at launch, voice engine configured for English.
+Mobile Money (Telco API) is a separate client-side payment track, docs coming from Joel.
+Start the Apple Developer account early due to approval lead time.
+
+
+
+
+Chat with client 
+
+Homework Buddy AI (Tutoria) — Client Thread for Developer
+
+Scope, product decisions, and current status. Commercial terms removed.
+
+Joel: The curriculum has already been developed. I am actually looking for platform development.
+
+Abdullah: Good to know on the curriculum, that makes things cleaner on the build side. What does the scope look like for you, full platform from the start or starting with a specific set of modules first?
+
+Joel: I am thinking about starting with 9 modules. Do send me an offer and let's book a kickoff meeting after which we can get started.
+
+Abdullah: Which module are you dropping from the 10 mentioned in the document, so I can structure the scope accurately? For the kickoff call, share your timezone and I'll send slots. The meeting will include the lead developer so any technical questions can be addressed directly.
+
+Joel: My timezone is GMT, UK time.
+
+Abdullah: What you have described is a flagship AI EdTech product: curriculum-aware AI engine, real-time speech interaction, adaptive learning, gamification, multilingual support across 5 languages, and dashboards for students, parents, teachers, and administrators. This is infrastructure-level, not a simple app. The right move is to start with a true MVP, student app, curriculum engine, and basic dashboard, to give something real to show schools and investors before committing to the full platform.
+
+Joel: Circling back. For the MVP range, what features could be deployed?
+
+Abdullah: I'll design the architecture and MVP feature set and share the proposal.
+
+Joel: I am entering it into a competition today and the more I put the pitch deck together the more I see the potential it could have. (shared a pitch deck screenshot)
+
+Abdullah: (sent the MVP proposal with two scoped options)
+
+Joel: I understand the two options. I can start with Option A and build up progressively. Apart from the cost of the app, will there be other charges, for example fees paid to OpenAI?
+
+Abdullah: In your own phased roadmap, voice interaction and gamification were already planned for Phase 2, not Phase 1. So what we are building is exactly your Phase 1 vision: the student app, the homework companion, and the curriculum engine. Before full development I'll put together a frontend prototype first, showing the screens, flows, and key features, so you can see exactly what's being built before backend work begins. Design can change later; the prototype is about the features. Two clean options: a core build (student auth and profiles, AI tutor with full curriculum RAG grounded in the Ghanaian curriculum, homework upload with OCR and contextual AI response, basic gamification with XP and streaks, student dashboard), and an expanded build that also includes voice interaction, PWA deployment, three months of post-launch support, and basic SEO.
+
+Abdullah: After confirmation I'll prepare the full PRD covering everything needed from your side, the AI API setup and ongoing costs, the milestone breakdown, and the timeline. Which option works for you?
+
+Joel: I'll take the expanded package. Two questions: 1. I was thinking this would be both Web and App. 2. Will I pay other fees apart from development? I wanted both web and app because that way you can send push notifications and get better user data.
+
+Abdullah: On web and app, I recommend a PWA, a Progressive Web App: both a website and an app in one. Users visit the web address on any device and install it to their home screen with one tap, no App Store or Play Store needed. Once installed it behaves like an app, including push notifications and offline capability. Starbucks, Uber, and Spotify all launched as PWAs. Building separate Flutter mobile and web apps means two codebases to build, test, and maintain, which doubles cost and time, and Flutter mobile has poor SEO. iOS App Store review for a new AI app aimed at children adds real delay. A PWA deploys instantly, works on every device, supports push notifications, and gives full user data. When the product grows, that's the time to move to native.
+
+Abdullah: One question to finalize scope: are your students primarily on Android or a mix of Android and iPhone?
+
+Joel: 80 percent use Android, the rest iPhone. About 80 percent will be on tablets and phones, so we build mobile-to-desktop, not desktop-to-mobile.
+
+Joel: Let's agree on the architecture, have one kickoff meeting, then start.
+
+Abdullah: I'll prepare the final architecture plan and PRD.
+
+Abdullah: (sent the PRD) Milestone breakdown:
+
+Milestone 1: Functional Prototype and Feedback
+Milestone 2: App Architecture and Profile Management
+Milestone 3: AI Core Integration and Voice Pipelines
+Milestone 4: Gamification, Polishing, and Launch
+
+Also including an Admin and Telemetry Dashboard as a bonus module: real-time visibility into student engagement, API cost per session, usage patterns, and rate-limiting to guard against unexpected API spikes. On mobile deployment, do you need iOS from day one or start Android-only? iOS requires an Apple Developer account and the review process takes time, so we plan for it early. Android can be distributed via APK for initial testing without the Play Store.
+
+Joel: Well noted. I am putting together the final curriculum and will get back shortly.
+
+Abdullah: (follow-up after a gap) Checking in on the curriculum, no rush.
+
+Joel: I have been off work for a while but the content and curriculum will be delivered on Fiverr today, then I'll share it so we can look at next steps.
+
+Joel: Kindly check to see if this is how you want the curriculum structured. (sent: TUTORIA project done by everest.pdf)
+
+Abdullah: The structure works for the pipeline. Each session has a clear topic boundary (grade, subject, topic), which is what we need to chunk cleanly for the vector database. Two things: no term or week tagging yet, only grade and topic, we need that mapping to retrieve content correctly. And is this the full knowledge base, or a teaching-flow reference sitting alongside separate raw curriculum content? Right now each topic has one sample dialogue.
+
+Abdullah: We'll need at least 1-2 curriculum books to get started. Not all subjects right now, those can be added later. Send 1-2 so we can convert the content into the AI tutor and give you a working version for feedback.
+
+Joel: Will work on this.
+
+Joel: The consultant has shared these documents, please check if this fits the requirements. Also let me know if you need the curriculum itself. (sent: Tutoria PRODUCTION KNOWLEDGE BASE xlsx + TUTORIA PROJECT PDF/DOCX)
+
+Abdullah: (files initially corrupted, re-sent and opened fine) Went through the full pack. Term and week are in now, tagged for retrieval and matched against the real NaCCA curriculum families for each phase. It's split into nine linked sheets (curriculum map, lesson content, AI dialogue, assessment bank, diagnostics, assignments, progression map, sources, QA checklist), which is the shape we need for ingestion.
+
+Abdullah: Two things worth knowing before we build on it. The per-grade content is templated rather than independently written per grade, I checked "Number and place value" across all nine grade levels and the explanation is the same sentence structure with the number scaled up, so subject depth per grade is thin right now. Also the official indicator codes are placeholders (marked "VERIFY OFFICIAL CODE" in the QA sheet), so a curriculum SME pass is still needed before it's exam-safe. Nothing here blocks starting the pipeline. Structure is solid.
+
+Abdullah: (to "send 1-2 subjects?") Yes, send 1-2 subjects, doesn't need to be the full set for now.
+
+Joel: Please check this to see if it works. (sent: Tutoria Client Delivery FINAL TOPIC REVISED.pdf)
+
+Abdullah: Reviewed, it works.
+
+Joel: I'll share the official NaCCA curriculum sources for the developer to use as the source of truth. Organized across phases:
+
+Primary 4–6: Mathematics, English Language, Science, Computing, Our World and Our People
+JHS 1–3: Common Core Programme, including Mathematics, English Language, Science, Social Studies, Computing
+SHS 1–3: Secondary Education curriculum
+
+The developer should capture the exact hierarchy: Grade → Subject → Strand → Sub-strand → Content Standard → Indicator → Official Indicator Code → Curriculum Content / Learning Expectations.
+
+Official NaCCA sources:
+
+Primary 4–6: https://nacca.gov.gh/learning-areas-subjects/new-standards-based-curriculum-2019/
+JHS 1–3: https://nacca.gov.gh/common-core-programme-ccp/
+SHS 1–3: https://nacca.gov.gh/secondary-education-curriculum/
+
+Treat these official documents as authoritative over the summarized curriculum in the previous document, so the system captures the exact standards, indicators, and codes correctly.
+
+Abdullah: Got it. This removes the guesswork and placeholder codes get replaced with the real ones. We'll treat these as the source of truth over the consultant's summarized version.
+
+Joel: (kickoff call scheduled and held)
+
+Abdullah: (after the call) Good to have the direction locked. The three things needed to start: your logo and brand assets, the payment provider docs/API, and confirmation on the voice feature, students will speak to the tutor in English, not a local language, since the curriculum is built around English and it affects how we configure the voice engine.
+
+Joel: Please find the logo. (sent Tutoria logo) We will do only the apps (Android, iOS). I am currently chasing the Mobile Money payment API.
+
+Abdullah: Got the logo. That works, we'll do native Android and iOS, and can plan for a PWA later if needed.
+
+Joel: Milestone 1 payment made. This week I will work with the Telco on the Payment API. You will have to take me through setting up the Google and App Store and any actions from my side of a technical nature.
+
+Abdullah: Send the Mobile Money API docs once you have them and I'll review the integration. I'll guide you through both stores step by step, starting the Apple Developer account early since it takes longest to approve, and I'll send a clear list of what's needed from your side.
+
+Joel: (Sep 10) Just checking in to see if everything is going well.
+
+Current status for the developer
+Build: Native Android and iOS only (Flutter). PWA deferred, may be added later.
+Milestone 1 is paid and active. Work can begin.
+Curriculum source of truth: the three official NaCCA links above, not the consultant's summarized documents. Hierarchy to model: Grade → Subject → Strand → Sub-strand → Content Standard → Indicator → Official Indicator Code → Content.
+Language: English at launch (voice engine configured for English).
+Payment: Mobile Money (Telco API), docs coming from Joel. Client-side integration, separate track.
+Store setup: Apple Developer account to start early due to approval lead time. Joel handles his-side actions with our guidance.
+Known curriculum caveat: consultant's earlier pack had templated per-grade content and placeholder indicator codes. Official NaCCA docs supersede it, but a curriculum accuracy pass is still needed before exam-safe claims.
