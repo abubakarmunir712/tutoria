@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Phase {
+  UPPER_PRIMARY
+  JHS
+  SHS
+}
+
+enum Grade {
+  B4
+  B5
+  B6
+  B7
+  B8
+  B9
+  SHS1
+  SHS2
+  SHS3
+}
+
+model Student {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  phone        String   @unique
+  passwordHash String
+  grade        Grade?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  enrollments   Enrollment[]
+  refreshTokens RefreshToken[]
+}
+
+model Subject {
+  id    String @id @default(uuid())
+  name  String
+  phase Phase
+
+  enrollments Enrollment[]
+
+  @@unique([name, phase])
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  studentId String
+  subjectId String
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, subjectId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  studentId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
