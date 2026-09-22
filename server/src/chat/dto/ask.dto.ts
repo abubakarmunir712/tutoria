@@ -1,5 +1,6 @@
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { HistoryTurnDto } from './history-turn.dto';
 
 export class AskDto {
   @IsString()
@@ -19,4 +20,10 @@ export class AskDto {
   @Min(1)
   @Max(10)
   topK?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => HistoryTurnDto)
+  history?: HistoryTurnDto[];
 }

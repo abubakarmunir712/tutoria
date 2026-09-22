@@ -30,6 +30,7 @@ export class ChatService {
         grade: dto.grade,
         subject: dto.subject,
         top_k: dto.topK ?? 3,
+        history: dto.history ?? [],
       }),
     });
     return this.handle(res);
