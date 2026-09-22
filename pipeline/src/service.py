@@ -24,11 +24,17 @@ IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 
+class HistoryTurn(BaseModel):
+    role: str  # 'user' | 'assistant'
+    content: str
+
+
 class AskRequest(BaseModel):
     question: str
     grade: str | None = None
     subject: str | None = None
     top_k: int = 3
+    history: list[HistoryTurn] = []
 
 
 class AskResponse(BaseModel):
@@ -36,16 +42,34 @@ class AskResponse(BaseModel):
     citations: list[dict]
 
 
-def _answer_grounded(question: str, grade: str | None, subject: str | None, top_k: int) -> AskResponse:
-    context = retrieve(question, grade, subject, top_k=top_k)
-    if not context:
-        return AskResponse(
-            answer="I couldn't find anything in the curriculum for this grade/subject that matches "
-            "your question. Try rephrasing, or check the grade/subject selected.",
-            citations=[],
-        )
+def _answer_grounded(
+    question: str,
+    grade: str | None,
+    subject: str | None,
+    top_k: int,
+    history: list[HistoryTurn] | None = None,
+) -> AskResponse:
+    history = history or []
+    history_dicts = [h.model_dump() for h in history]
+
+    # Only re-ground on the FIRST message of a topic. Follow-up replies in an existing
+    # conversation (e.g. a one-word answer to a guiding question) are handled by Gemini
+    # using the conversation history alone — re-embedding a short reply and searching
+    # Qdrant on every turn tends to retrieve irrelevant content instead of continuing
+    # the already-grounded topic.
+    if history:
+        context = []
+    else:
+        context = retrieve(question, grade, subject, top_k=top_k)
+        if not context:
+            return AskResponse(
+                answer="I couldn't find anything in the curriculum for this grade/subject that "
+                "matches your question. Try rephrasing, or check the grade/subject selected.",
+                citations=[],
+            )
+
     llm = get_llm_provider()
-    answer_text = llm.answer(question, context)
+    answer_text = llm.answer(question, context, history=history_dicts)
     citations = [
         {
             "indicator_code": c["indicator_code"],
@@ -65,7 +89,7 @@ def health():
 
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest):
-    return _answer_grounded(req.question, req.grade, req.subject, req.top_k)
+    return _answer_grounded(req.question, req.grade, req.subject, req.top_k, req.history)
 
 
 @app.post("/ask-image", response_model=AskResponse)

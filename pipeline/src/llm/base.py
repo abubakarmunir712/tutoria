@@ -11,9 +11,17 @@ from abc import ABC, abstractmethod
 
 class LlmProvider(ABC):
     @abstractmethod
-    def answer(self, question: str, context: list[dict]) -> str:
+    def answer(
+        self,
+        question: str,
+        context: list[dict],
+        history: list[dict] | None = None,
+    ) -> str:
         """Generate a grounded tutor answer from the student's question + retrieved
-        curriculum records (each with indicator_code, indicator_text, exemplar, etc.)."""
+        curriculum records (each with indicator_code, indicator_text, exemplar, etc.).
+        `history` is prior turns in this conversation, as [{role: 'user'|'assistant',
+        content: str}] — pass through for multi-turn/Socratic follow-ups; `context` is
+        typically empty on those turns (only the first message in a topic re-grounds)."""
         raise NotImplementedError
 
     @abstractmethod
