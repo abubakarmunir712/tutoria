@@ -134,6 +134,7 @@ class ApiClient {
     required String question,
     String? grade,
     String? subject,
+    List<Map<String, String>>? history,
   }) async {
     final token = await SecureStorage.instance.accessToken;
     final res = await _client.post(
@@ -142,7 +143,12 @@ class ApiClient {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'question': question, 'grade': grade, 'subject': subject}),
+      body: jsonEncode({
+        'question': question,
+        'grade': grade,
+        'subject': subject,
+        'history': history ?? [],
+      }),
     );
     return ChatResponse.fromJson(await _decode(res));
   }

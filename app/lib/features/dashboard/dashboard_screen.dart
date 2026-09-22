@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/grade_labels.dart';
 import '../../core/theme.dart';
 import '../auth/auth_state.dart';
 import '../chat/chat_screen.dart';
 
-const _grades = ['B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'SHS1', 'SHS2', 'SHS3'];
+const _grades = ['B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'SHS1', 'SHS2', 'SHS3']; // raw codes — see grade_labels.dart for display names
 
 const _subjectIcons = {
   'Mathematics': Icons.calculate_outlined,
@@ -106,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       DropdownButtonFormField<String>(
                         initialValue: _profile?['grade'] as String?,
                         items: _grades
-                            .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                            .map((g) => DropdownMenuItem(value: g, child: Text(gradeLabel(g))))
                             .toList(),
                         onChanged: (grade) async {
                           if (grade == null) return;

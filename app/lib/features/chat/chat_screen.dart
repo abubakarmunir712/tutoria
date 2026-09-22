@@ -5,6 +5,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/api_client.dart';
 import '../../core/api_config.dart';
+import '../../core/grade_labels.dart';
 
 class _ChatMessage {
   _ChatMessage.user(this.text) : isUser = true, citations = const [], imagePath = null;
@@ -33,10 +34,28 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messages = <_ChatMessage>[];
   bool _sending = false;
 
+  /// Prior turns in this conversation, oldest first — captured before the new
+  /// message is appended, and capped so the request body doesn't grow unbounded
+  /// over a long session.
+  List<Map<String, String>> _buildHistory() {
+    const maxTurns = 10;
+    final recent = _messages.length > maxTurns
+        ? _messages.sublist(_messages.length - maxTurns)
+        : _messages;
+    return recent
+        .map((m) {
+          final content = m.text ?? (m.imagePath != null ? '[Sent a homework photo]' : '');
+          return {'role': m.isUser ? 'user' : 'assistant', 'content': content};
+        })
+        .where((m) => m['content']!.isNotEmpty)
+        .toList();
+  }
+
   Future<void> _sendText() async {
     final question = _controller.text.trim();
     if (question.isEmpty || _sending) return;
     _controller.clear();
+    final history = _buildHistory();
     setState(() {
       _messages.add(_ChatMessage.user(question));
       _sending = true;
@@ -46,6 +65,7 @@ class _ChatScreenState extends State<ChatScreen> {
         question: question,
         grade: widget.grade,
         subject: widget.subject,
+        history: history,
       );
       setState(() => _messages.add(_ChatMessage.ai(response.answer, response.citations)));
     } on ApiException catch (e) {
@@ -88,7 +108,21 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.subject} Tutor')),
+      appBar: AppBar(
+        title: Text('${widget.subject} Tutor'),
+        bottom: widget.grade == null
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(20),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    gradeLabel(widget.grade),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ),
+              ),
+      ),
       body: Column(
         children: [
           Expanded(
