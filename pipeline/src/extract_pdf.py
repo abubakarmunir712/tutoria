@@ -1,16 +1,20 @@
 """
-Extract structured curriculum records from an official NaCCA curriculum PDF.
+Extract structured curriculum records from an official NaCCA curriculum PDF
+(Upper Primary B4-B6 and JHS B7-B9; SHS uses a different format — see extract_shs.py).
 
-Layout (confirmed against MATHS-UPPER-PRIMARY-B4-B6.pdf): each content page is a
-3-column table — Content Standards | Indicators and Exemplars | Subject Specific
-Practices and Core Competencies — with no visible ruling lines, and a page header
-("Basic 4 / Strand 1: NUMBER / Sub-strand 1: ...") that only appears when a new
-strand/sub-strand starts (continuation pages repeat just the column headers).
+Layout: each content page is a table — Content Standards | Indicators and Exemplars |
+Core Competencies (some subjects split Indicators and Exemplars into two columns) — with
+no visible ruling lines, and a page header ("Strand 1: NUMBER / Sub-strand 1: ...") that
+sets the current strand/sub-strand. Subjects differ in header casing, in whether grade
+headers are on content pages, in code punctuation (B7.1.1.1: / B7/JHS1.1.1.1.) and in
+how many columns the table has, so this does not assume any of those.
 
-Approach: cluster words by x0 into the 3 columns (gap-based, not table-ruling-based,
-since there are no ruling lines), reconstruct each column's text in reading order,
-then regex out content-standard codes (B4.1.1.1) and indicator codes (B4.1.1.1.1)
-from their respective columns.
+Approach: column boundaries are anchored on the page itself — the x position of the
+indicator codes (left edge of the indicator column) and of the "Core Competencies"
+header (right edge) — falling back to the document-wide median when a page lacks them.
+Column text is rebuilt in reading order, then content-standard codes (B4.1.1.1) and
+indicator codes (B4.1.1.1.1) are regexed out of their respective columns. Grade comes
+from the code prefix, so no grade header is needed.
 
 Run: python src/extract_pdf.py <input.pdf> <subject> <phase> -o <output.json>
 """
@@ -26,14 +30,28 @@ from pathlib import Path
 import pdfplumber
 
 
-# Source PDF sometimes splits a code across two words (e.g. 'B4.' + '1.1.1.5' as separate
-# tokens), which column_text() rejoins with a space — so these tolerate whitespace between
-# segments; the matched code is then whitespace-stripped before use.
-CONTENT_STANDARD_RE = re.compile(r"^(B\d{1,2}\s*\.\s*\d+\s*\.\s*\d+\s*\.\s*\d+)\b")
-INDICATOR_RE = re.compile(r"^(B\d{1,2}\s*\.\s*\d+\s*\.\s*\d+\s*\.\s*\d+\s*\.\s*\d+)\b")
+# Codes: B7.1.1.1 (content standard), B7.1.1.1.1 (indicator). Tolerates whitespace between
+# segments (the PDFs sometimes split 'B4.' + '1.1.1.5' into two words), an optional
+# '/JHS1' infix (Social Studies: B7/JHS1.1.1.1), and trailing '.'/':' punctuation.
+_SEG = r"\s*\.\s*\d+"
+CODE_RE = re.compile(rf"^(B\d{{1,2}}(?:/JHS\d)?{_SEG}{_SEG}{_SEG}(?:{_SEG})?)[.:]?")
+WORD_INDICATOR_RE = re.compile(r"^B\d{1,2}(?:/JHS\d)?\.\d+\.\d+\.\d+\.\d+")
+WORD_CODE_RE = re.compile(r"^B\d{1,2}(?:/JHS\d)?\.\d+\.\d+\.\d+[.:]?$")
 STRAND_HEADER_RE = re.compile(r"(?<!-)(?<!Sub )\bStrand\s*\d+\s*[-:–—.]\s*(.+)", re.IGNORECASE)
-SUBSTRAND_HEADER_RE = re.compile(r"Sub-strand\s*\d+\s*[-:–—.]\s*(.+)", re.IGNORECASE)
-GRADE_HEADER_RE = re.compile(r"\bBasic\s+(\d)\b", re.IGNORECASE)
+SUBSTRAND_HEADER_RE = re.compile(r"Sub-?\s?strand\s*\d+\s*[-:–—.]\s*(.+)", re.IGNORECASE)
+CORE_HEADER_WORDS = {"core", "subject", "competencies", "practices", "specific"}
+EXEMPLAR_MARKER_RE = re.compile(r"^(e\.?\s?g\b|eg[. ]|exemplar|[•·▪●○]|\d+\s*[.)]\s|[ivx]+\s*[.)]\s)", re.IGNORECASE)
+PRIVATE_USE_RE = re.compile("^[\ue000-\uf8ff]+\\s*")
+
+
+def normalize_code(raw: str) -> str:
+    code = re.sub(r"\s+", "", raw)
+    code = re.sub(r"/JHS\d", "", code)
+    return code.rstrip(".:")
+
+
+def code_segments(code: str) -> int:
+    return len(code.split("."))
 
 
 @dataclass
@@ -51,119 +69,206 @@ class CurriculumRecord:
     images: list = field(default_factory=list)
 
 
-def detect_cut_points(pages, n_columns=3, sample_stride=3):
-    """
-    Column boundaries, computed once from many pages (median of per-page gap
-    detection) rather than per-page. Per-page detection is fragile — a page with
-    unusual line-wrapping in one column can make the wrong gaps look widest, silently
-    merging two real columns into one. Pooling across the whole document is robust to
-    those one-off anomalies since the layout is otherwise consistent throughout.
-    """
-    samples = [[] for _ in range(n_columns - 1)]
-    for page in pages[::sample_stride]:
-        words = page.extract_words()
-        xs = sorted(set(round(w["x0"]) for w in words))
-        if len(xs) <= n_columns:
-            continue
-        gaps = sorted(
-            ((xs[i + 1] - xs[i], (xs[i] + xs[i + 1]) / 2) for i in range(len(xs) - 1)),
-            reverse=True,
-        )
-        cut_points = sorted(p for _, p in gaps[: n_columns - 1])
-        if len(cut_points) == n_columns - 1:
-            for i, cp in enumerate(cut_points):
-                samples[i].append(cp)
-    return [statistics.median(s) for s in samples if s]
-
-
-def cluster_columns(words, cut_points):
-    """Bucket words into columns using fixed x0 cut points."""
-    columns = [[] for _ in range(len(cut_points) + 1)]
-    for w in words:
-        col = sum(1 for cp in cut_points if w["x0"] > cp)
-        columns[col].append(w)
-    return columns
-
-
-def column_text(words):
-    """Rebuild reading-order text from a column's words (line by line, by y)."""
+def lines_from_words(words, y_bucket=3):
+    """[(y, text)] in reading order, built from words bucketed into lines by y."""
     lines = {}
     for w in words:
-        y = round(w["top"] / 3) * 3  # bucket lines that are a few px apart
+        y = round(w["top"] / y_bucket) * y_bucket
         lines.setdefault(y, []).append(w)
-    ordered = []
+    out = []
     for y in sorted(lines):
         line_words = sorted(lines[y], key=lambda w: w["x0"])
-        ordered.append(" ".join(w["text"] for w in line_words))
-    return "\n".join(ordered)
+        out.append((y, " ".join(w["text"] for w in line_words)))
+    return out
 
 
-def parse_content_standards(text):
+FOOTER_RE = re.compile(r"©\s*NaCCA,?\s*Ministry of Education\s*\d{0,4}", re.IGNORECASE)
+EXEMPLAR_LABEL_RE = re.compile(r"(^\s*Exemplars?\(?s?\)?\s*:\s*|\s*Exemplars?\(?s?\)?\s*:\s*$)", re.IGNORECASE)
+
+
+def clean_text(text: str) -> str:
+    text = FOOTER_RE.sub("", text)
+    text = EXEMPLAR_LABEL_RE.sub("", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def clean_line(line: str) -> str:
+    return PRIVATE_USE_RE.sub("", line.strip()).strip()
+
+
+def is_progression_table(words, doc_indicator_x=None) -> bool:
+    """Cross-grade scope tables put content-standard codes side by side in several x
+    positions; real content pages keep them all in one column. Wrapped fragments of
+    indicator codes (4-segment prefixes sitting in the indicator column) are ignored."""
+    ind_xs = [w["x0"] for w in words if WORD_INDICATOR_RE.match(w["text"])]
+    if doc_indicator_x is not None:
+        ind_xs.append(doc_indicator_x)
+    xs = [
+        w["x0"]
+        for w in words
+        if WORD_CODE_RE.match(w["text"]) and not any(abs(w["x0"] - ix) < 6 for ix in ind_xs)
+    ]
+    return bool(xs) and max(xs) - min(xs) > 80
+
+
+def page_layout(words):
+    """Per-page column anchors: (indicator_x0, core_x0, exemplar_x0), each None if absent."""
+    ind_xs = [w["x0"] for w in words if WORD_INDICATOR_RE.match(w["text"])]
+    if not ind_xs:
+        return None, None, None
+    indicator_x = statistics.median(ind_xs)
+    first_code_top = min(w["top"] for w in words if WORD_INDICATOR_RE.match(w["text"]))
+
+    header = [w for w in words if w["top"] < first_code_top - 2]
+    header_lines = lines_from_words(header)
+    core_x = None
+    candidates = [w["x0"] for w in header if w["text"].lower() in CORE_HEADER_WORDS and w["x0"] > indicator_x + 100]
+    if candidates:
+        core_x = min(candidates)
+
+    exemplar_x = None
+    # Separate Exemplars column iff the header reads "Indicator  Exemplars" — not
+    # "Indicators AND Exemplars", which is one merged column.
+    for w in header:
+        if w["text"].lower().startswith("exemplar") and w["x0"] > indicator_x + 60:
+            same_line = sorted((o for o in header if abs(o["top"] - w["top"]) < 4), key=lambda o: o["x0"])
+            idx = same_line.index(w)
+            prev = same_line[idx - 1]["text"].lower() if idx else ""
+            if prev not in ("and", "&"):
+                exemplar_x = w["x0"]
+            break
+    return indicator_x, core_x, exemplar_x
+
+
+def detect_document_anchors(pages, sample_stride=2):
+    inds, cores = [], []
+    for page in pages[::sample_stride]:
+        words = page.extract_words()
+        if is_progression_table(words):
+            continue
+        ind, core, _ = page_layout(words)
+        if ind is not None:
+            inds.append(ind)
+        if core is not None:
+            cores.append(core)
+    return (
+        statistics.median(inds) if inds else None,
+        statistics.median(cores) if cores else None,
+    )
+
+
+def split_columns(words, indicator_x, core_x, exemplar_x):
+    """(content_standard_words, indicator_words, exemplar_words_or_None); competencies dropped."""
+    cs, ind, ex = [], [], []
+    for w in words:
+        x = w["x0"]
+        if x < indicator_x - 4:
+            cs.append(w)
+        elif core_x is not None and x >= core_x - 4:
+            continue
+        elif exemplar_x is not None and x >= exemplar_x - 4:
+            ex.append(w)
+        else:
+            ind.append(w)
+    return cs, ind, (ex if exemplar_x is not None else None)
+
+
+def parse_content_standards(lines):
     """{code: full_text}, merging '... CONT'D' continuations into the same code."""
     standards = {}
     current_code = None
-    for line in text.splitlines():
+    for _, line in lines:
         line = line.strip()
         if not line:
             continue
-        m = CONTENT_STANDARD_RE.match(line)
-        if m:
-            current_code = re.sub(r"\s+", "", m.group(1))
+        m = CODE_RE.match(line)
+        if m and code_segments(normalize_code(m.group(1))) == 4:
+            current_code = normalize_code(m.group(1))
             standards.setdefault(current_code, "")
             line = line[m.end():].strip()
         if current_code:
-            if line.upper().endswith("CONT'D") or line.upper().endswith("CONT’D"):
+            if line.upper().endswith(("CONT'D", "CONT’D")):
                 continue
             standards[current_code] = (standards[current_code] + " " + line).strip()
     return standards
 
 
-def parse_indicators(text):
-    """[(code, indicator_text, exemplar_text), ...] in document order."""
+def parse_indicators(ind_lines, ex_lines=None):
+    """
+    ([[code, y, indicator_text, exemplar_text], ...], orphan_exemplar_text).
+    `orphan` is exemplar text that appears before the page's first indicator code
+    (a continuation of the previous page's last indicator).
+
+    With a separate exemplar column (ex_lines given), indicator-column lines are all
+    indicator text and exemplar lines attach to the indicator whose y-range they fall in.
+    With a merged column, the text after the code is the indicator until an exemplar
+    marker (e.g., bullet, "1.") or a vertical gap, then everything is exemplar.
+    """
     entries = []
-    current = None
-    for line in text.splitlines():
-        line = line.strip()
+    orphan = []
+    ys = [y for y, _ in ind_lines]
+    diffs = [b - a for a, b in zip(ys, ys[1:]) if b - a > 0]
+    gap_threshold = statistics.median(diffs) * 1.7 if diffs else 99
+    prev_y = None
+    in_exemplar = False
+
+    for y, line in ind_lines:
+        line = clean_line(line)
         if not line:
             continue
-        m = INDICATOR_RE.match(line)
-        if m:
-            if current:
-                entries.append(current)
-            code = re.sub(r"\s+", "", m.group(1))
-            rest = line[m.end():].strip()
-            current = [code, rest, []]
-        elif current:
-            if line.lower().startswith(("e.g", "eg.", "eg ")):
-                current[2].append(line)
-            elif current[2]:
-                current[2][-1] += " " + line
+        m = CODE_RE.match(line)
+        if m and code_segments(normalize_code(m.group(1))) == 5:
+            entries.append([normalize_code(m.group(1)), y, line[m.end():].strip(), ""])
+            prev_y = y
+            in_exemplar = False
+            continue
+        if not entries:
+            orphan.append(line)
+            prev_y = y
+            continue
+        cur = entries[-1]
+        if ex_lines is not None:
+            cur[2] = (cur[2] + " " + line).strip()
+        else:
+            if not in_exemplar and (
+                EXEMPLAR_MARKER_RE.match(line) or (prev_y is not None and y - prev_y > gap_threshold)
+            ):
+                in_exemplar = True
+            if in_exemplar:
+                cur[3] = (cur[3] + " " + line).strip()
             else:
-                current[1] += " " + line
-    if current:
-        entries.append(current)
-    return [(code, text.strip(), " ".join(ex).strip()) for code, text, ex in entries]
+                cur[2] = (cur[2] + " " + line).strip()
+        prev_y = y
 
+    # Glued "…computersExemplar(s): 1. …" (Computing JHS): split on the marker.
+    for e in entries:
+        m = re.search(r"Exemplar\(?s?\)?\s*:", e[2], re.IGNORECASE)
+        if m and not e[3]:
+            e[3] = e[2][m.end():].strip()
+            e[2] = e[2][:m.start()].strip()
 
-def indicator_y_positions(words):
-    """[(code, y_top), ...] sorted by y, for locating which indicator an image belongs to."""
-    lines = {}
-    for w in words:
-        y = round(w["top"] / 3) * 3
-        lines.setdefault(y, []).append(w)
-    positions = []
-    for y in sorted(lines):
-        line_words = sorted(lines[y], key=lambda w: w["x0"])
-        line_text = " ".join(w["text"] for w in line_words)
-        m = INDICATOR_RE.match(line_text)
-        if m:
-            positions.append((m.group(1), y))
-    return positions
+    if ex_lines is not None:
+        for y, line in ex_lines:
+            line = clean_line(line)
+            if not line:
+                continue
+            owner = None
+            for e in entries:
+                if e[1] <= y + 2:
+                    owner = e
+                else:
+                    break
+            if owner is None:
+                orphan.append(line)
+            else:
+                owner[3] = (owner[3] + " " + line).strip()
+
+    return entries, " ".join(orphan).strip()
 
 
 def extract_page_images(page, positions, last_indicator, image_dir: Path, page_num: int):
     """Save each image on the page, tagged with the nearest preceding indicator code."""
-    saved = {}  # indicator_code -> [relative paths]
+    saved = {}
     for i, img in enumerate(page.images):
         top = img["top"]
         code = last_indicator
@@ -173,7 +278,7 @@ def extract_page_images(page, positions, last_indicator, image_dir: Path, page_n
             else:
                 break
         if code is None:
-            continue  # image appears before any indicator has been seen at all
+            continue
         bbox = (
             max(img["x0"], 0),
             max(img["top"], 0),
@@ -183,18 +288,21 @@ def extract_page_images(page, positions, last_indicator, image_dir: Path, page_n
         if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
             continue
         filename = f"page{page_num}_{i}.png"
-        out_path = image_dir / filename
         try:
-            page.crop(bbox).to_image(resolution=150).save(out_path)
+            page.crop(bbox).to_image(resolution=150).save(image_dir / filename)
         except Exception:
             continue
         saved.setdefault(code, []).append(f"images/{filename}")
     return saved
 
 
+def clean_header(text: str) -> str:
+    return re.sub(r"[.\s]{3,}.*$", "", text).strip()
+
+
 def extract(pdf_path: str, subject: str, phase: str, start_page: int = 0, image_dir: Path | None = None):
-    records = []
-    grade = strand = substrand = None
+    records: list[CurriculumRecord] = []
+    strand = substrand = None
     last_indicator = None
     images_by_indicator: dict[str, list] = {}
 
@@ -203,57 +311,72 @@ def extract(pdf_path: str, subject: str, phase: str, start_page: int = 0, image_
 
     with pdfplumber.open(pdf_path) as pdf:
         content_pages = pdf.pages[start_page:]
-        cut_points = detect_cut_points(content_pages, n_columns=3)
+        doc_indicator_x, doc_core_x = detect_document_anchors(content_pages)
 
         for page_num, page in enumerate(content_pages, start=start_page + 1):
             page_text = page.extract_text() or ""
-
-            g = GRADE_HEADER_RE.search(page_text)
-            if g:
-                grade = f"B{g.group(1)}"
-            s = STRAND_HEADER_RE.search(page_text)
-            if s:
-                strand = s.group(1).strip()
-            ss = SUBSTRAND_HEADER_RE.search(page_text)
-            if ss:
-                substrand = ss.group(1).strip()
-
-            if not grade or not strand or not substrand:
-                continue  # front matter / scope-and-sequence pages before content starts
-
             words = page.extract_words()
-            columns = cluster_columns(words, cut_points)
-            if len(columns) < 2:
+
+            if is_progression_table(words, doc_indicator_x):
                 continue
 
-            standards = parse_content_standards(column_text(columns[0]))
-            indicators = parse_indicators(column_text(columns[1]))
+            s = STRAND_HEADER_RE.search(page_text)
+            if s:
+                strand = clean_header(s.group(1))
+            ss = SUBSTRAND_HEADER_RE.search(page_text)
+            if ss:
+                substrand = clean_header(ss.group(1))
+
+            indicator_x, core_x, exemplar_x = page_layout(words)
+            if indicator_x is None:
+                indicator_x = doc_indicator_x
+            if core_x is None:
+                core_x = doc_core_x
+            if indicator_x is None or not strand or not substrand:
+                continue
+
+            cs_words, ind_words, ex_words = split_columns(words, indicator_x, core_x, exemplar_x)
+            standards = parse_content_standards(lines_from_words(cs_words))
+            ind_lines = lines_from_words(ind_words)
+            ex_lines = lines_from_words(ex_words) if ex_words is not None else None
+            indicators, orphan = parse_indicators(ind_lines, ex_lines)
+
+            if orphan and records:
+                prev = records[-1]
+                prev.exemplar = (prev.exemplar + " " + orphan).strip()
 
             if image_dir and page.images:
-                positions = indicator_y_positions(columns[1])
-                page_images = extract_page_images(page, positions, last_indicator, image_dir, page_num)
-                for code, paths in page_images.items():
+                positions = [(c, y) for c, y, _, _ in indicators]
+                for code, paths in extract_page_images(page, positions, last_indicator, image_dir, page_num).items():
                     images_by_indicator.setdefault(code, []).extend(paths)
 
             if indicators:
                 last_indicator = indicators[-1][0]
 
-            for code, ind_text, exemplar in indicators:
+            for code, _, ind_text, exemplar in indicators:
                 content_code = ".".join(code.split(".")[:4])
                 records.append(
                     CurriculumRecord(
-                        grade=grade,
+                        grade=code.split(".")[0],
                         subject=subject,
                         phase=phase,
                         strand=strand,
                         substrand=substrand,
                         content_standard_code=content_code,
-                        content_standard_text=standards.get(content_code, ""),
+                        content_standard_text=clean_text(standards.get(content_code, "")),
                         indicator_code=code,
-                        indicator_text=ind_text,
-                        exemplar=exemplar,
+                        indicator_text=clean_text(ind_text),
+                        exemplar=clean_text(exemplar),
                     )
                 )
+
+    # Same indicator can appear twice (e.g. repeated in a summary table); keep the fuller one.
+    by_code: dict[str, CurriculumRecord] = {}
+    for record in records:
+        existing = by_code.get(record.indicator_code)
+        if existing is None or len(record.indicator_text + record.exemplar) > len(existing.indicator_text + existing.exemplar):
+            by_code[record.indicator_code] = record
+    records = list(by_code.values())
 
     for record in records:
         if record.indicator_code in images_by_indicator:
