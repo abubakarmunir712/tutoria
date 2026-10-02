@@ -44,6 +44,14 @@ EXEMPLAR_MARKER_RE = re.compile(r"^(e\.?\s?g\b|eg[. ]|exemplar|[•·▪●○]|
 PRIVATE_USE_RE = re.compile("^[\ue000-\uf8ff]+\\s*")
 
 
+# Grades each phase actually covers — drops the example codes (B1.2.3.4.1 …) that the
+# intro sections of the PDFs use to explain the numbering scheme.
+PHASE_GRADES = {
+    "UPPER_PRIMARY": {"B4", "B5", "B6"},
+    "JHS": {"B7", "B8", "B9"},
+}
+
+
 def normalize_code(raw: str) -> str:
     code = re.sub(r"\s+", "", raw)
     code = re.sub(r"/JHS\d", "", code)
@@ -266,7 +274,7 @@ def parse_indicators(ind_lines, ex_lines=None):
     return entries, " ".join(orphan).strip()
 
 
-def extract_page_images(page, positions, last_indicator, image_dir: Path, page_num: int):
+def extract_page_images(page, positions, last_indicator, image_dir: Path, page_num: int, prefix: str = ""):
     """Save each image on the page, tagged with the nearest preceding indicator code."""
     saved = {}
     for i, img in enumerate(page.images):
@@ -287,7 +295,7 @@ def extract_page_images(page, positions, last_indicator, image_dir: Path, page_n
         )
         if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
             continue
-        filename = f"page{page_num}_{i}.png"
+        filename = f"{prefix}page{page_num}_{i}.png"
         try:
             page.crop(bbox).to_image(resolution=150).save(image_dir / filename)
         except Exception:
@@ -300,7 +308,14 @@ def clean_header(text: str) -> str:
     return re.sub(r"[.\s]{3,}.*$", "", text).strip()
 
 
-def extract(pdf_path: str, subject: str, phase: str, start_page: int = 0, image_dir: Path | None = None):
+def extract(
+    pdf_path: str,
+    subject: str,
+    phase: str,
+    start_page: int = 0,
+    image_dir: Path | None = None,
+    image_prefix: str = "",
+):
     records: list[CurriculumRecord] = []
     strand = substrand = None
     last_indicator = None
@@ -347,13 +362,15 @@ def extract(pdf_path: str, subject: str, phase: str, start_page: int = 0, image_
 
             if image_dir and page.images:
                 positions = [(c, y) for c, y, _, _ in indicators]
-                for code, paths in extract_page_images(page, positions, last_indicator, image_dir, page_num).items():
+                for code, paths in extract_page_images(page, positions, last_indicator, image_dir, page_num, image_prefix).items():
                     images_by_indicator.setdefault(code, []).extend(paths)
 
             if indicators:
                 last_indicator = indicators[-1][0]
 
             for code, _, ind_text, exemplar in indicators:
+                if code.split(".")[0] not in PHASE_GRADES.get(phase, {code.split(".")[0]}):
+                    continue
                 content_code = ".".join(code.split(".")[:4])
                 records.append(
                     CurriculumRecord(
@@ -397,10 +414,15 @@ def main():
         default=None,
         help="Directory to save extracted diagrams into (paths stored in output are relative to this dir's parent). Omit to skip image extraction.",
     )
+    parser.add_argument(
+        "--image-prefix",
+        default="",
+        help="Prefix for saved image filenames, so images from different PDFs sharing one directory don't collide (e.g. 'maths-b4-b6-').",
+    )
     args = parser.parse_args()
 
     image_dir = Path(args.image_dir) if args.image_dir else None
-    records = extract(args.pdf_path, args.subject, args.phase, args.start_page, image_dir)
+    records = extract(args.pdf_path, args.subject, args.phase, args.start_page, image_dir, args.image_prefix)
     output = [asdict(r) for r in records]
 
     n_images = sum(len(r["images"]) for r in output)
