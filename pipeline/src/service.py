@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from llm import get_llm_provider  # noqa: E402
-from retrieval import retrieve  # noqa: E402
+from retrieval import WEAK_MATCH_SCORE, build_retrieval_query, retrieve  # noqa: E402
 
 app = FastAPI(title="Tutoria AI Service")
 
@@ -52,33 +52,35 @@ def _answer_grounded(
     history = history or []
     history_dicts = [h.model_dump() for h in history]
 
-    # Only re-ground on the FIRST message of a topic. Follow-up replies in an existing
-    # conversation (e.g. a one-word answer to a guiding question) are handled by Gemini
-    # using the conversation history alone — re-embedding a short reply and searching
-    # Qdrant on every turn tends to retrieve irrelevant content instead of continuing
-    # the already-grounded topic.
-    if history:
-        context = []
-    else:
-        context = retrieve(question, grade, subject, top_k=top_k)
-        if not context:
-            return AskResponse(
-                answer="I couldn't find anything in the curriculum for this grade/subject that "
-                "matches your question. Try rephrasing, or check the grade/subject selected.",
-                citations=[],
-            )
+    # Re-ground every turn. A reply that carries no topic of its own ("yes", "5", "why is that?")
+    # is searched together with the student's last real question, so a Socratic back-and-forth
+    # keeps the same curriculum context; a message that states a new topic gets its own.
+    context = retrieve(build_retrieval_query(question, history_dicts), grade, subject, top_k=top_k)
+    if not context and not history:
+        return AskResponse(
+            answer="I couldn't find anything in the curriculum for this grade/subject that "
+            "matches your question. Try rephrasing, or check the grade/subject selected.",
+            citations=[],
+        )
 
     llm = get_llm_provider()
     answer_text = llm.answer(question, context, history=history_dicts)
-    citations = [
-        {
-            "indicator_code": c["indicator_code"],
-            "strand": c["strand"],
-            "substrand": c["substrand"],
-            "images": c.get("images", []),
-        }
-        for c in context
-    ]
+    # A weak best match means nothing really fits (the model was told so); don't show the
+    # student curriculum citations and diagrams for a question the curriculum doesn't cover.
+    weak = not context or max(c["score"] for c in context) < WEAK_MATCH_SCORE
+    citations = (
+        []
+        if weak
+        else [
+            {
+                "indicator_code": c["indicator_code"],
+                "strand": c["strand"],
+                "substrand": c["substrand"],
+                "images": c.get("images", []),
+            }
+            for c in context
+        ]
+    )
     return AskResponse(answer=answer_text, citations=citations)
 
 

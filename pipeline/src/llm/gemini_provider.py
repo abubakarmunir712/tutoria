@@ -3,7 +3,41 @@ import os
 from google import genai
 from google.genai import types
 
+from retrieval import WEAK_MATCH_SCORE
+
 from .base import LlmProvider
+
+GRADE_NAMES = {
+    "B4": "Class 4", "B5": "Class 5", "B6": "Class 6",
+    "B7": "JHS 1", "B8": "JHS 2", "B9": "JHS 3",
+    "SHS1": "SHS 1", "SHS2": "SHS 2", "SHS3": "SHS 3",
+}
+WEAK_MATCH_NOTE = (
+    "Note: nothing in the curriculum matched this question closely. If it is outside this "
+    "grade's curriculum (or not a school topic), say so kindly instead of forcing a match, and "
+    "don't cite a code that doesn't really fit."
+)
+
+
+def format_context(context: list[dict]) -> str:
+    """Curriculum records as the model sees them: where each sits (grade, topic, content
+    standard) as well as the indicator itself, so it can tell what the lesson is about."""
+    blocks = []
+    for c in context:
+        lines = [
+            f"[{c['indicator_code']}] {GRADE_NAMES.get(c.get('grade'), c.get('grade', ''))} "
+            f"{c.get('subject', '')} — {c.get('strand', '')} > {c.get('substrand', '')}"
+        ]
+        if c.get("content_standard_text"):
+            lines.append(f"Content standard: {c['content_standard_text']}")
+        lines.append(f"Indicator: {c['indicator_text']}")
+        if c.get("exemplar"):
+            lines.append(f"Exemplar: {c['exemplar']}")
+        blocks.append("\n".join(lines))
+    text = "\n\n".join(blocks)
+    if context and max(c.get("score", 1.0) for c in context) < WEAK_MATCH_SCORE:
+        text += f"\n\n{WEAK_MATCH_NOTE}"
+    return text
 
 SYSTEM_PROMPT = """You are Tutoria, a warm, patient AI homework tutor for Ghanaian students. You \
 are having a real back-and-forth conversation with a child, not writing a textbook page.
@@ -66,10 +100,7 @@ class GeminiProvider(LlmProvider):
         ]
 
         if context:
-            context_block = "\n\n".join(
-                f"[{c['indicator_code']}] {c['indicator_text']}\nExemplar: {c.get('exemplar', '')}"
-                for c in context
-            )
+            context_block = format_context(context)
             user_text = f"Curriculum context:\n{context_block}\n\nStudent: {question}"
         else:
             user_text = question

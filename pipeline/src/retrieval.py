@@ -1,6 +1,7 @@
 """Shared embed-and-retrieve logic, used by both query_rag.py (terminal test) and service.py (API)."""
 
 import os
+import re
 from functools import lru_cache
 
 from fastembed import TextEmbedding
@@ -25,6 +26,35 @@ def get_qdrant_client() -> QdrantClient:
         api_key=os.environ["QDRANT_API_SECRET"],
         timeout=30,
     )
+
+
+# Best-match cosine score below which nothing in the grade/subject really matches the question.
+# On-topic questions score 0.56-0.8 (median ~0.71) and off-topic ones 0.45-0.69, so this can't
+# gate retrieval — it only lets the model be told the match is weak.
+WEAK_MATCH_SCORE = 0.58
+
+_WORD_RE = re.compile(r"\w+")
+_FOLLOWUP_RE = re.compile(
+    r"\b(it|that|this|those|these|they|them|why|how come|again|more|example|examples|next|so|then)\b", re.I
+)
+
+
+def build_retrieval_query(question: str, history: list[dict] | None = None) -> str:
+    """
+    The text to search the curriculum with. A bare reply to a tutoring question ("yes", "5",
+    "I don't know") or a pronoun follow-up ("why does that work?") says nothing about the
+    topic, so anchor it to the student's most recent substantive question. A message that
+    states its own topic is searched on its own, so switching topics mid-chat re-grounds.
+    """
+    words = _WORD_RE.findall(question)
+    anchors = [
+        h["content"]
+        for h in (history or [])
+        if h.get("role") == "user" and len(_WORD_RE.findall(h.get("content", ""))) >= 5
+    ]
+    if anchors and (len(words) <= 4 or (len(words) <= 10 and _FOLLOWUP_RE.search(question))):
+        return f"{anchors[-1]} {question}"
+    return question
 
 
 def build_filter(grade: str | None, subject: str | None) -> Filter | None:
