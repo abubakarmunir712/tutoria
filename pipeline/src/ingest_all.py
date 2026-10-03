@@ -6,7 +6,8 @@ Run (from pipeline/):
   python src/ingest_all.py                      # extract + load everything
   python src/ingest_all.py --extract-only       # write JSON only, no Qdrant needed
   python src/ingest_all.py --only mathematics-jhs science-shs
-  python src/ingest_all.py --skip-images        # faster, no diagram extraction
+  python src/ingest_all.py --skip-images        # faster, no diagram extraction (drops image links from the JSON)
+  python src/ingest_all.py --from-json          # skip PDF extraction, load the existing JSON into Qdrant
 """
 
 import argparse
@@ -44,6 +45,11 @@ def main():
     parser.add_argument("--only", nargs="*", help="Source slugs to process (default: all)")
     parser.add_argument("--extract-only", action="store_true", help="Write JSON but don't load Qdrant")
     parser.add_argument("--skip-images", action="store_true")
+    parser.add_argument(
+        "--from-json",
+        action="store_true",
+        help="Don't re-extract PDFs; embed and load the existing data/structured/<slug>.json files.",
+    )
     parser.add_argument("--collection", default="curriculum")
     args = parser.parse_args()
 
@@ -63,10 +69,14 @@ def main():
 
     for source in sources:
         print(f"\n== {source.slug} ({source.pdf})")
-        records = [asdict(r) for r in extract_source(source, args.skip_images)]
         out = STRUCTURED_DIR / f"{source.slug}.json"
-        out.write_text(json.dumps(records, indent=2))
-        print(f"   extracted {len(records)} records -> {out.relative_to(ROOT)}")
+        if args.from_json:
+            records = json.loads(out.read_text())
+            print(f"   read {len(records)} records from {out.relative_to(ROOT)}")
+        else:
+            records = [asdict(r) for r in extract_source(source, args.skip_images)]
+            out.write_text(json.dumps(records, indent=2))
+            print(f"   extracted {len(records)} records -> {out.relative_to(ROOT)}")
         if not records:
             print("   !! no records — skipping load")
             continue
