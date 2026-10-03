@@ -117,19 +117,54 @@ def clean_line(line: str) -> str:
     return PRIVATE_USE_RE.sub("", line.strip()).strip()
 
 
+JOINED_CODE_RE = re.compile(r"B\d{1,2}(?:/JHS\d)?(?:\.\d+){3,4}[.:]?")
+# A lone word may have text glued on ("B7.4.1.1.1Use ...", "B4.1.2.1.Learners"), but only
+# when the code ends cleanly: not followed by another digit or ".digit".
+LEADING_CODE_RE = re.compile(r"B\d{1,2}(?:/JHS\d)?(?:\.\d+){3,4}(?![\d]|\.\d)")
+
+
+def code_positions(words, max_join=3):
+    """[(x0, top, n_segments)] for every code in the page, including ones the PDF splits
+    over several words ('B4.4.6.1.' + '1', 'B4.2.1.1' + '.1.'). Longest match wins."""
+    lines = {}
+    for w in words:
+        lines.setdefault(round(w["top"] / 3), []).append(w)
+    found = []
+    for line in lines.values():
+        line.sort(key=lambda w: w["x0"])
+        i = 0
+        while i < len(line):
+            if not re.match(r"B\d", line[i]["text"]):
+                i += 1
+                continue
+            for j in range(min(max_join, len(line) - i - 1), -1, -1):
+                joined = "".join(w["text"] for w in line[i : i + j + 1])
+                m = JOINED_CODE_RE.fullmatch(joined) if j else LEADING_CODE_RE.match(joined)
+                if m:
+                    code = m.group(0)
+                    found.append((line[i]["x0"], line[i]["top"], len(code.rstrip(".:").split("."))))
+                    i += j
+                    break
+            i += 1
+    return found
+
+
 def is_progression_table(words, doc_indicator_x=None) -> bool:
-    """Cross-grade scope tables put content-standard codes side by side in several x
-    positions; real content pages keep them all in one column. Wrapped fragments of
+    """Cross-grade scope tables put content-standard codes side by side in several columns
+    (one per grade); a real content page has them in a single column. Wrapped fragments of
     indicator codes (4-segment prefixes sitting in the indicator column) are ignored."""
-    ind_xs = [w["x0"] for w in words if WORD_INDICATOR_RE.match(w["text"])]
+    positions = code_positions(words)
+    ind_xs = [x for x, _, n in positions if n == 5]
     if doc_indicator_x is not None:
         ind_xs.append(doc_indicator_x)
-    xs = [
-        w["x0"]
-        for w in words
-        if WORD_CODE_RE.match(w["text"]) and not any(abs(w["x0"] - ix) < 6 for ix in ind_xs)
-    ]
-    return bool(xs) and max(xs) - min(xs) > 80
+    xs = sorted(x for x, _, n in positions if n == 4 and not any(abs(x - ix) < 6 for ix in ind_xs))
+    clusters = 0
+    last = None
+    for x in xs:
+        if last is None or x - last > 40:
+            clusters += 1
+        last = x
+    return clusters >= 3
 
 
 def competency_column_x(body_words, min_x, min_gap=4):
@@ -150,13 +185,28 @@ def competency_column_x(body_words, min_x, min_gap=4):
     return None
 
 
-def page_layout(words):
+def indicator_column_x(positions, doc_indicator_x=None):
+    """x of the indicator column: the largest cluster of 5-segment codes. Codes merely
+    *mentioned* in exemplar or content-standard text ("refer to B4.4.1.1.4") sit elsewhere,
+    so they form small clusters; on a tie the cluster nearest the document's column wins."""
+    clusters: list[list[float]] = []
+    for x in sorted(x for x, _ in positions):
+        if clusters and x - clusters[-1][-1] <= 30:
+            clusters[-1].append(x)
+        else:
+            clusters.append([x])
+    ref = doc_indicator_x if doc_indicator_x is not None else 0
+    best = min(clusters, key=lambda c: (-len(c), abs(statistics.median(c) - ref)))
+    return min(best)
+
+
+def page_layout(words, doc_indicator_x=None):
     """Per-page column anchors: (indicator_x0, core_x0, exemplar_x0), each None if absent."""
-    ind_xs = [w["x0"] for w in words if WORD_INDICATOR_RE.match(w["text"])]
-    if not ind_xs:
+    positions = [(x, top) for x, top, n in code_positions(words) if n == 5]
+    if not positions:
         return None, None, None
-    indicator_x = statistics.median(ind_xs)
-    first_code_top = min(w["top"] for w in words if WORD_INDICATOR_RE.match(w["text"]))
+    indicator_x = indicator_column_x(positions, doc_indicator_x)
+    first_code_top = min(top for x, top in positions if abs(x - indicator_x) <= 30)
 
     header = [w for w in words if w["top"] < first_code_top - 2]
     # Header words are centred over their column, so their x0 sits to the right of where the
@@ -309,10 +359,17 @@ def parse_indicators(ind_lines, ex_lines=None):
     return entries, " ".join(orphan).strip()
 
 
+MIN_IMAGE_PT = 20  # images smaller than this in both dimensions are decoration
+
+
 def extract_page_images(page, positions, last_indicator, image_dir: Path, page_num: int, prefix: str = ""):
     """Save each image on the page, tagged with the nearest preceding indicator code."""
     saved = {}
     for i, img in enumerate(page.images):
+        # Decorative fragments (shading dots, glyph slivers — a page can carry hundreds a few
+        # points across) aren't diagrams.
+        if img["x1"] - img["x0"] < MIN_IMAGE_PT and img["bottom"] - img["top"] < MIN_IMAGE_PT:
+            continue
         top = img["top"]
         code = last_indicator
         for pos_code, pos_y in positions:
@@ -377,8 +434,9 @@ def extract(
             if ss:
                 substrand = clean_header(ss.group(1))
 
-            indicator_x, core_x, exemplar_x = page_layout(words)
-            if indicator_x is None:
+            indicator_x, core_x, exemplar_x = page_layout(words, doc_indicator_x)
+            if indicator_x is None or (doc_indicator_x is not None and indicator_x > doc_indicator_x + 40):
+                # No code at all, or only a mid-text mention of one: use the document's column.
                 indicator_x = doc_indicator_x
             if core_x is None:
                 core_x = doc_core_x
