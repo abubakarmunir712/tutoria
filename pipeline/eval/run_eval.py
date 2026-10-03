@@ -202,11 +202,18 @@ def main():
     ap.add_argument("--hybrid", action="store_true", help="also report dense+BM25 reciprocal-rank-fusion")
     ap.add_argument("--rerank", default=None, help="cross-encoder model to rerank the top candidates with")
     ap.add_argument("--rerank-n", type=int, default=15)
+    ap.add_argument("--spell", action="store_true", help="spell-correct queries with the curriculum vocabulary, as the service does")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
 
     records = load_records(Path(args.records_dir))
     print(f"{len(records)} records, {len(CASES)} queries")
+    if args.spell:
+        from retrieval import correct_spelling, expand_student_terms, vocabulary_from_records
+
+        vocab = vocabulary_from_records(records)
+        CASES[:] = [(expand_student_terms(correct_spelling(q, vocab)), g, s, rel) for q, g, s, rel in CASES]
+        print("spell-correction on")
 
     for name in args.variants:
         text_fn, model, qprefix = VARIANTS[name]

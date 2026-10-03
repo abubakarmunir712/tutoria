@@ -15,7 +15,14 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from llm import get_llm_provider  # noqa: E402
-from retrieval import WEAK_MATCH_SCORE, build_retrieval_query, retrieve  # noqa: E402
+from retrieval import (  # noqa: E402
+    WEAK_MATCH_SCORE,
+    build_retrieval_query,
+    correct_spelling,
+    curriculum_vocabulary,
+    expand_student_terms,
+    retrieve,
+)
 
 app = FastAPI(title="Tutoria AI Service")
 
@@ -55,7 +62,10 @@ def _answer_grounded(
     # Re-ground every turn. A reply that carries no topic of its own ("yes", "5", "why is that?")
     # is searched together with the student's last real question, so a Socratic back-and-forth
     # keeps the same curriculum context; a message that states a new topic gets its own.
-    context = retrieve(build_retrieval_query(question, history_dicts), grade, subject, top_k=top_k)
+    search_query = expand_student_terms(
+        correct_spelling(build_retrieval_query(question, history_dicts), curriculum_vocabulary())
+    )
+    context = retrieve(search_query, grade, subject, top_k=top_k)
     if not context and not history:
         return AskResponse(
             answer="I couldn't find anything in the curriculum for this grade/subject that "
