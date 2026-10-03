@@ -94,7 +94,20 @@ FOOTER_RE = re.compile(r"©\s*NaCCA,?\s*Ministry of Education\s*\d{0,4}", re.IGN
 EXEMPLAR_LABEL_RE = re.compile(r"(^\s*Exemplars?\(?s?\)?\s*:\s*|\s*Exemplars?\(?s?\)?\s*:\s*$)", re.IGNORECASE)
 
 
+# The six NaCCA core competencies appear as a fixed list in the right-hand column. Where that
+# column's lines interleave with the exemplar text, whole names (optionally with their
+# "(CC)" abbreviation) or "Personal … Leadership" split across a bullet still get through.
+COMPETENCY_RE = re.compile(
+    r"(Critical\s+Thinking\s+and\s+Problem\s+Solving|Creativity\s+and\s+Innovation|"
+    r"Communication\s+and\s+Collaboration|Cultural\s+Identity\s+and\s+Global\s+Citizenship|"
+    r"Personal\s+Development\s+and\s+Leadership|Digital\s+Literacy|Personal\s*[•·▪]?\s*Leadership)"
+    r"(\s*\((?:CP|CI|CC|CG|PL|DL)\))?,?",
+    re.IGNORECASE,
+)
+
+
 def clean_text(text: str) -> str:
+    text = COMPETENCY_RE.sub(" ", text)
     text = FOOTER_RE.sub("", text)
     text = EXEMPLAR_LABEL_RE.sub("", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -119,6 +132,24 @@ def is_progression_table(words, doc_indicator_x=None) -> bool:
     return bool(xs) and max(xs) - min(xs) > 80
 
 
+def competency_column_x(body_words, min_x, min_gap=4):
+    """Left edge of the Core Competencies column: the end of the first empty vertical
+    channel (>= min_gap wide) in the body text that lies right of `min_x`."""
+    spans = sorted((w["x0"], w["x1"]) for w in body_words if w["x1"] > min_x - 50)
+    merged: list[list[float]] = []
+    for a, b in spans:
+        if merged and a <= merged[-1][1] + 1:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b])
+    right_edge = max((b for _, b in spans), default=0)
+    for (_, end), (start, _) in zip(merged, merged[1:]):
+        # A channel hugging the page margin is the margin, not the competencies column.
+        if end >= min_x and start - end >= min_gap and start < right_edge * 0.9:
+            return start
+    return None
+
+
 def page_layout(words):
     """Per-page column anchors: (indicator_x0, core_x0, exemplar_x0), each None if absent."""
     ind_xs = [w["x0"] for w in words if WORD_INDICATOR_RE.match(w["text"])]
@@ -128,12 +159,10 @@ def page_layout(words):
     first_code_top = min(w["top"] for w in words if WORD_INDICATOR_RE.match(w["text"]))
 
     header = [w for w in words if w["top"] < first_code_top - 2]
-    header_lines = lines_from_words(header)
+    # Header words are centred over their column, so their x0 sits to the right of where the
+    # column's text actually starts. Use the first clear vertical channel in the page's body
+    # text instead, and only fall back to the header when no channel is found.
     core_x = None
-    candidates = [w["x0"] for w in header if w["text"].lower() in CORE_HEADER_WORDS and w["x0"] > indicator_x + 100]
-    if candidates:
-        core_x = min(candidates)
-
     exemplar_x = None
     # Separate Exemplars column iff the header reads "Indicator  Exemplars" — not
     # "Indicators AND Exemplars", which is one merged column.
@@ -145,6 +174,12 @@ def page_layout(words):
             if prev not in ("and", "&"):
                 exemplar_x = w["x0"]
             break
+
+    body = [w for w in words if w["top"] >= first_code_top - 2]
+    core_x = competency_column_x(body, (exemplar_x if exemplar_x else indicator_x) + (100 if exemplar_x else 150))
+    if core_x is None:
+        candidates = [w["x0"] for w in header if w["text"].lower() in CORE_HEADER_WORDS and w["x0"] > indicator_x + 100]
+        core_x = min(candidates) if candidates else None
     return indicator_x, core_x, exemplar_x
 
 
