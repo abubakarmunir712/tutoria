@@ -1088,7 +1088,20 @@
     "content_standard_text": "Demonstrate the production of magnet, domestic and industrial application of Magnetic force and its relationship with Newton\u2019s Second law of motion and in everyday life",
     "indicator_code": "B8.4.4.1.2",
     "indicator_text": "Explain the relationship between magnetic force and Newton\u2019s Second Law of motion; and show the law\u2019s application to life.",
-    "exemplar": "1. Explain Newton\u2019s Second Law of motion with examples from daily life. 2. Perform an experiment to show the relationship between force and motion using magnetic force, and the principle of Newton\u2019s Second Law of Motion. 2021 EXEMPLARS complex machines and describe their machines are from B7.4.4.2.1 machines are and show how different they machines. in complex machines. functions of a complex machine can improve the STRAND 4: FORCES AND ENERGY SUB-STRAND 5: AGRICULTURAL TOOLS INDICATORS AND EXEMPLARS",
+    "exemplar": "1. Explain Newton\u2019s Second Law of motion with examples from daily life. 2. Perform an experiment to show the relationship between force and motion using magnetic force, and the principle of Newton\u2019s Second Law of Motion. 2021 INDICATORS AND EXEMPLARS",
+    "images": []
+  },
+  {
+    "grade": "B8",
+    "subject": "Science",
+    "phase": "JHS",
+    "strand": "FORCES AND ENERGY",
+    "substrand": "FORCE AND MOTION",
+    "content_standard_code": "B8.4.4.2",
+    "content_standard_text": "Demonstrate understanding of complex machines and how they work",
+    "indicator_code": "B8.4.4.2.1",
+    "indicator_text": "Identify complex machines and describe their functions in life",
+    "exemplar": "1. Recap what simple machines are from B7.4.4.2.1 2. Explain what complex machines are and show how different they are from simple machines. 3. Identify simple machine in complex machines. 4. Explain how the functions of a complex machine can improve the quality of life. 2021 STRAND 4: FORCES AND ENERGY SUB-STRAND 5: AGRICULTURAL TOOLS INDICATORS AND EXEMPLARS",
     "images": []
   },
   {
@@ -1140,7 +1153,46 @@
     "content_standard_text": "Demonstrate knowledge of waste management systems and apply it in an environment",
     "indicator_code": "B8.5.1.1.2",
     "indicator_text": "Apply knowledge of waste management practices to manage waste in a community",
-    "exemplar": "1. Carry out an activity to manage waste using knowledge acquired in indicator B8.5.1.1.1 in their communities. 2. Evaluate the waste management practices carried out in a community and present a report. 2021 STRAND 5: HUMANS AND THE ENVIRONMENT SUB-STRAND 2: HUMAN HEALTH AND EXEMPLARS CORE COMPETENCIES 5.2.1.1 Explain the symptoms, effects and Critical Thinking of common communicable diseases. Communication and Innovation 1. Compile data on the number of males and females who CP 5.6: Demonstrate suffer from common communicable diseases such as a generalised hepatitis, from a medical centre and determine the possible situation causes of these diseases. 2. Identify causes, symptoms, effects and prevention of hepatitis, CP 5.6: Demonstrate HIV, measles and others and make a presentation. a generalised situation CC 8.2: Explain details, using speech 3. Search for the causes, symptoms and prevention of hepatitis CP 5.1: Ability and develop a plan to minimise the disease. several sources 2021 AND EXEMPLARS CORE COMPETENCIES 5.2.1.2. Analyse the risk factors of communicable Critical Thinking Communication and Innovation 1. Search for information that is associated with communicable DL 5.5: Evaluate diseases. 2. Create awareness about risk factors of communicable CC 8.3: diseases such as hepatitis, HIV, measles and others in order sentences to prevent the diseases in their schools and communities. imaginative 2021 AND EXEMPLARS CORE COMPETENCIES 5.2.2.1 Explain the nature of bacterial diseases Critical Thinking special emphasis on food poisoning/gonorrhoea/ Communication their causes, symptoms, effects on humans and Innovation prevention 1. Discuss the nature of bacterial diseases. CP 5.1: Ability several sources 2. Search for information and make presentations on food DL 5.1: Ability poisoning, gonorrhoea, and meningitis diseases their mode needed and of transmission from person to person, community to effectively community and from country to country. 3. Describe the symptoms, effects and prevention of food CC 8.1: Speak poisoning,, gonorrhoea, and meningitis diseases. narrative group 4. Describe the role of individuals, community members and CC 8.1: Speak government in managing food poisoning, gonorrhoea, and narrative meningitis diseases. group 5. Design and produce a poster to educate their community CI 5.2: Ability members on the incidence and control of named bacterial create novel diseases: food poisoning, gonorrhoea, and meningitis. 2021 STRAND 5: HUMANS AND THE ENVIRONMENT SUB-STRAND 3: SCIENCE AND INDUSTRY INDICATORS AND EXEMPLARS",
+    "exemplar": "1. Carry out an activity to manage waste using knowledge acquired in indicator B8.5.1.1.1 in their communities. 2. Evaluate the waste management practices carried out in a community and present a report. 2021 STRAND 5: HUMANS AND THE ENVIRONMENT SUB-STRAND 2: HUMAN HEALTH INDICATORS AND EXEMPLARS",
+    "images": []
+  },
+  {
+    "grade": "B8",
+    "subject": "Science",
+    "phase": "JHS",
+    "strand": "HUMANS AND THE ENVIRONMENT",
+    "substrand": "HUMAN HEALTH",
+    "content_standard_code": "B8.5.2.1",
+    "content_standard_text": "Demonstrate knowledge of common communicable diseases, such as Hepatitis, of humans, causes, symptoms, effects and their prevention",
+    "indicator_code": "B8.5.2.1.1",
+    "indicator_text": "Explain the symptoms, effects and prevention of common communicable diseases.",
+    "exemplar": "1. Compile data on the number of males and females who suffer from common communicable diseases such as hepatitis, from a medical centre and determine the possible causes of these diseases. 2. Identify causes, symptoms, effects and prevention of hepatitis, HIV, measles and others and make a presentation. 3. Search for the causes, symptoms and prevention of hepatitis and develop a plan to minimise the disease. 2021 INDICATORS AND EXEMPLARS",
+    "images": []
+  },
+  {
+    "grade": "B8",
+    "subject": "Science",
+    "phase": "JHS",
+    "strand": "HUMANS AND THE ENVIRONMENT",
+    "substrand": "HUMAN HEALTH",
+    "content_standard_code": "B8.5.2.1",
+    "content_standard_text": "",
+    "indicator_code": "B8.5.2.1.2",
+    "indicator_text": "Analyse the risk factors of communicable diseases",
+    "exemplar": "1. Search for information that is associated with communicable diseases. 2. Create awareness about risk factors of communicable diseases such as hepatitis, HIV, measles and others in order to prevent the diseases in their schools and communities. 2021 INDICATORS AND EXEMPLARS",
+    "images": []
+  },
+  {
+    "grade": "B8",
+    "subject": "Science",
+    "phase": "JHS",
+    "strand": "HUMANS AND THE ENVIRONMENT",
+    "substrand": "HUMAN HEALTH",
+    "content_standard_code": "B8.5.2.2",
+    "content_standard_text": "Demonstrate knowledge of the nature of selected bacterial diseases of humans, their causes, symptoms, effects and prevention",
+    "indicator_code": "B8.5.2.2.1",
+    "indicator_text": "Explain the nature of bacterial diseases with special emphasis on food poisoning/gonorrhoea/ meningitis their causes, symptoms, effects on humans and prevention",
+    "exemplar": "1. Discuss the nature of bacterial diseases. 2. Search for information and make presentations on food poisoning, gonorrhoea, and meningitis diseases their mode of transmission from person to person, community to community and from country to country. 3. Describe the symptoms, effects and prevention of food poisoning,, gonorrhoea, and meningitis diseases. 4. Describe the role of individuals, community members and government in managing food poisoning, gonorrhoea, and meningitis diseases. 5. Design and produce a poster to educate their community members on the incidence and control of named bacterial diseases: food poisoning, gonorrhoea, and meningitis. 2021 STRAND 5: HUMANS AND THE ENVIRONMENT SUB-STRAND 3: SCIENCE AND INDUSTRY INDICATORS AND EXEMPLARS",
     "images": []
   },
   {
@@ -1335,7 +1387,20 @@
     "content_standard_text": "",
     "indicator_code": "B9.2.1.1.2",
     "indicator_text": "Describe the importance of the nitrogen cycle to the environment",
-    "exemplar": "1. Describe the importance of nitrogen to the environment. 2. Carry out a project to show how certain plants such as leguminous crops can replenish nitrogen in the soil. 3. Predict what will happen if the nitrogen cycle is interrupted by actions such as leaching, bush burning, and destruction of leguminous plants. 2021 2: CYCLES 2: LIFE CYCLE OF ORGANISMS of the grasshopper as a form of a grasshopper from egg through of the life cycle of a grasshopper. grasshopper is described as compared to complete metamorphosis",
+    "exemplar": "1. Describe the importance of nitrogen to the environment. 2. Carry out a project to show how certain plants such as leguminous crops can replenish nitrogen in the soil. 3. Predict what will happen if the nitrogen cycle is interrupted by actions such as leaching, bush burning, and destruction of leguminous plants. 2021 STRAND 2: CYCLES SUB-STRAND 2: LIFE CYCLE OF ORGANISMS INDICATORS AND EXEMPLARS",
+    "images": []
+  },
+  {
+    "grade": "B9",
+    "subject": "Science",
+    "phase": "JHS",
+    "strand": "CYCLES",
+    "substrand": "LIFE CYCLE OF ORGANISMS",
+    "content_standard_code": "B9.2.2.1",
+    "content_standard_text": "Demonstrate an understanding of the life cycle of grasshopper and assess how their activities affect humans",
+    "indicator_code": "B9.2.2.1.1",
+    "indicator_text": "Describe the life cycle of the grasshopper as a form of incomplete metamorphosis",
+    "exemplar": "1. Draw the stages of the life cycle of a grasshopper from egg through nymph to adult. 2. Identify the behaviour of each stage of the life cycle of a grasshopper. 3. Explain why the life cycle of the grasshopper is described as incomplete metamorphosis as compared to complete metamorphosis in the housefly and mosquito in B7.2.2.1.1 and B8.2.2.1.1 respectively. 2021 INDICATORS AND EXEMPLARS",
     "images": []
   },
   {
