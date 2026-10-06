@@ -1,3 +1,4 @@
+import json
 import os
 
 from google import genai
@@ -5,7 +6,9 @@ from google.genai import types
 
 from retrieval import WEAK_MATCH_SCORE
 
-from .base import LlmProvider
+from pydantic import BaseModel
+
+from .base import UNREADABLE, LlmProvider, Transcription
 
 GRADE_NAMES = {
     "B4": "Class 4", "B5": "Class 5", "B6": "Class 6",
@@ -79,6 +82,37 @@ Formatting rules (this renders in a mobile chat bubble, not a document):
   "<", ">", "cm²"."""
 
 
+TRANSCRIBE_PROMPT = f"""This is a phone photo of a Ghanaian school student's homework or worksheet \
+(Primary, JHS or SHS). It may be tilted, shadowed, printed or handwritten.
+
+Transcribe every question or problem exactly as written, in order, as plain text. Keep the \
+question numbers and letters (1., 2., (a), (b)). Write maths the way a student would type it: \
+fractions as 3/4, powers as x^2, multiplication as x, division as ÷, roots as sqrt(), keep \
+decimals, units and signs exactly.
+
+Never guess. If you cannot read a word, number or symbol, write [?] in its place instead of \
+filling in something plausible. Do NOT solve, answer, explain or correct anything, and do not add \
+anything that is not on the page. If the student has already written an answer or working for a question, put it on a new \
+line after that question starting with "Student's working:" and copy it exactly, mistakes \
+included.
+
+Reply as JSON with three fields:
+- "text": the transcription described above. If the image has no legible question or homework \
+(blank, too blurry or dark to read, or not a document), use exactly: {UNREADABLE}
+- "topic": a short phrase (3-8 words) naming the school topic or skill the homework tests, such as \
+"adding fractions with different denominators" or "identifying nouns in sentences". Name the skill \
+being practised, not the example's subject matter (for "Underline the nouns: The boy kicked the \
+ball", the topic is nouns, not football). Use "" if the text is {UNREADABLE}.
+- "confident": true only if every word, number and symbol of every question was clearly legible. \
+false if you had to guess or skip anything (blurry, smudged, cut off, ambiguous handwriting)."""
+
+
+class _TranscriptionSchema(BaseModel):
+    text: str
+    topic: str
+    confident: bool
+
+
 class GeminiProvider(LlmProvider):
     def __init__(self, model: str | None = None):
         self._client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -114,14 +148,23 @@ class GeminiProvider(LlmProvider):
         )
         return response.text
 
-    def transcribe_image(self, image_bytes: bytes, mime_type: str) -> str:
+    def transcribe_image(self, image_bytes: bytes, mime_type: str) -> Transcription:
         response = self._client.models.generate_content(
             model=self._model,
-            contents=[
-                types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-                "This is a photo of a Ghanaian primary school student's homework. "
-                "Transcribe the exact question/problem being asked, as plain text. "
-                "Do not answer it or solve it — only transcribe the question.",
-            ],
+            contents=[types.Part.from_bytes(data=image_bytes, mime_type=mime_type), TRANSCRIBE_PROMPT],
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json",
+                response_schema=_TranscriptionSchema,
+            ),
         )
-        return response.text
+        try:
+            data = json.loads(response.text)
+            return Transcription(
+                text=(data.get("text") or "").strip(),
+                topic=(data.get("topic") or "").strip(),
+                confident=bool(data.get("confident", False)),
+            )
+        except (ValueError, TypeError, AttributeError):
+            # Model ignored the JSON format: treat whatever it said as the transcription.
+            return Transcription(text=(response.text or "").strip(), confident=False)

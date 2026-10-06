@@ -7,6 +7,28 @@ and registering it in `__init__.py`'s factory — nothing else in the codebase
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+# Returned by transcribe_image when the photo has no legible question (blank, too blurry, not
+# homework). The service turns this into a "please retake the photo" reply instead of letting
+# the model invent a question.
+UNREADABLE = "UNREADABLE"
+
+
+@dataclass
+class Transcription:
+    text: str  # the question(s) as plain text, or UNREADABLE
+    topic: str = ""  # a few words naming the school topic/skill the homework tests
+    confident: bool = True  # False if the model had to guess any word, number or symbol
+
+    @property
+    def unreadable(self) -> bool:
+        return not self.text.strip() or self.text.strip().upper().startswith(UNREADABLE)
+
+    @property
+    def needs_confirmation(self) -> bool:
+        """Readable, but not reliably: tutoring a misread problem is worse than asking."""
+        return not self.unreadable and (not self.confident or "[?]" in self.text)
 
 
 class LlmProvider(ABC):
@@ -25,8 +47,10 @@ class LlmProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def transcribe_image(self, image_bytes: bytes, mime_type: str) -> str:
-        """Read a homework photo and return the transcribed question/problem text.
+    def transcribe_image(self, image_bytes: bytes, mime_type: str) -> Transcription:
+        """Read a homework photo and return the transcribed question(s) as plain text, or
+        UNREADABLE if there is no legible question, plus a short topic phrase for the search. If the student has already written an
+        answer or working, it follows the question on a line starting "Student's working:".
         This text is then run through the same grounded `answer()` path as a typed
         question — the vision model only reads the image, it doesn't answer from it,
         so homework photos stay grounded in the curriculum like everything else."""
