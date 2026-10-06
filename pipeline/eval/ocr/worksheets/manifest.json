@@ -1,0 +1,245 @@
+[
+  {
+    "file": "p5-maths-fractions.jpg",
+    "grade": "B5",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "Class 5 Mathematics - Exercise 4",
+      "Name: ____________",
+      "1. Add: 3/4 + 2/5",
+      "2. Subtract: 7/8 - 1/2",
+      "3. Kofi ate 1/3 of a pizza and Ama ate 1/4 of it.",
+      "What fraction did they eat altogether?"
+    ],
+    "expect_topic": "fraction",
+    "has_working": false
+  },
+  {
+    "file": "p4-english-nouns.jpg",
+    "grade": "B4",
+    "subject": "English Language",
+    "style": "print",
+    "expected_lines": [
+      "English Language - Class 4",
+      "Underline the nouns in each sentence.",
+      "1. The dog ran to the market.",
+      "2. Ama gave her mother a basket."
+    ],
+    "expect_topic": "noun",
+    "has_working": false
+  },
+  {
+    "file": "p6-science-electricity.jpg",
+    "grade": "B6",
+    "subject": "Science",
+    "style": "print",
+    "expected_lines": [
+      "Science - Class 6 Homework",
+      "1. Name three sources of electricity.",
+      "2. Draw a simple circuit with a battery and a bulb."
+    ],
+    "expect_topic": "electric|circuit",
+    "has_working": false
+  },
+  {
+    "file": "jhs2-maths-equations.jpg",
+    "grade": "B8",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "JHS 2 Mathematics",
+      "Solve for x:",
+      "1. 2x + 5 = 11",
+      "2. 3(x - 4) = 15",
+      "3. x/2 + 3 = 9"
+    ],
+    "expect_topic": "equation",
+    "has_working": false
+  },
+  {
+    "file": "jhs2-english-letter.jpg",
+    "grade": "B8",
+    "subject": "English Language",
+    "style": "print",
+    "expected_lines": [
+      "English Language - JHS 2",
+      "Write a formal letter to your headteacher asking",
+      "for permission to attend a family funeral."
+    ],
+    "expect_topic": "letter",
+    "has_working": false
+  },
+  {
+    "file": "jhs2-social-pollution.jpg",
+    "grade": "B8",
+    "subject": "Social Studies",
+    "style": "print",
+    "expected_lines": [
+      "Social Studies - JHS 2",
+      "1. Explain three effects of pollution on the environment."
+    ],
+    "expect_topic": "pollut",
+    "has_working": false
+  },
+  {
+    "file": "shs1-maths-factorise.jpg",
+    "grade": "SHS1",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "SHS 1 Core Mathematics",
+      "1. Factorise x^2 + 5x + 6",
+      "2. Solve x^2 - 9 = 0"
+    ],
+    "expect_topic": "factor|quadratic|expression|equation",
+    "has_working": false
+  },
+  {
+    "file": "shs1-computing-algorithm.jpg",
+    "grade": "SHS1",
+    "subject": "Computing",
+    "style": "print",
+    "expected_lines": [
+      "Computing - SHS 1",
+      "1. Write an algorithm to find the largest of three numbers."
+    ],
+    "expect_topic": "algorithm|flowchart|program",
+    "has_working": false
+  },
+  {
+    "file": "p5-english-agreement.jpg",
+    "grade": "B5",
+    "subject": "English Language",
+    "style": "print",
+    "expected_lines": [
+      "English - Class 5",
+      "Fill in the blank with the correct verb.",
+      "1. She ___ to school every day. (go / goes)",
+      "2. The boys ___ football on Saturday. (play / plays)"
+    ],
+    "expect_topic": "verb|tense|sentence|agree|grammar",
+    "has_working": false
+  },
+  {
+    "file": "p4-english-plurals.jpg",
+    "grade": "B4",
+    "subject": "English Language",
+    "style": "print",
+    "expected_lines": [
+      "English - Class 4",
+      "Write the plural of each word.",
+      "1. child    2. man    3. tooth    4. box"
+    ],
+    "expect_topic": "plural|noun",
+    "has_working": false
+  },
+  {
+    "file": "p5-maths-rounding.jpg",
+    "grade": "B5",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "Class 5 Mathematics",
+      "1. Round 4,567 to the nearest hundred.",
+      "2. Round 12,849 to the nearest thousand."
+    ],
+    "expect_topic": "round|place value|estimat",
+    "has_working": false
+  },
+  {
+    "file": "p6-maths-ratio.jpg",
+    "grade": "B6",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "Class 6 Mathematics",
+      "1. A recipe uses 2 cups of flour for every 3 cups of sugar.",
+      "Write the ratio of flour to sugar.",
+      "2. Share GH\u00a2 60 between Kofi and Ama in the ratio 1 : 2."
+    ],
+    "expect_topic": "ratio|proportion",
+    "has_working": false
+  },
+  {
+    "file": "p5-science-flower.jpg",
+    "grade": "B5",
+    "subject": "Science",
+    "style": "print",
+    "expected_lines": [
+      "Science - Class 5",
+      "1. Name the parts of a flower.",
+      "2. State the function of the roots of a plant."
+    ],
+    "expect_topic": "plant|flower|root",
+    "has_working": false
+  },
+  {
+    "file": "p5-maths-five-questions.jpg",
+    "grade": "B5",
+    "subject": "Mathematics",
+    "style": "print",
+    "expected_lines": [
+      "Class 5 Mathematics - Revision",
+      "1. Add: 1/2 + 1/3",
+      "2. Find the perimeter of a rectangle 8 cm long and 5 cm wide.",
+      "3. Convert 0.75 to a percentage.",
+      "4. What is the next number: 2, 4, 8, 16, ___ ?",
+      "5. Write 5,306 in words."
+    ],
+    "expect_topic": "fraction|perimeter|percent|pattern|place value",
+    "has_working": false
+  },
+  {
+    "file": "p5-maths-handwritten.jpg",
+    "grade": "B5",
+    "subject": "Mathematics",
+    "style": "hand",
+    "expected_lines": [
+      "1. Add 3/4 + 2/5",
+      "3/4 + 2/5 = 5/9",
+      "2. Find the perimeter of a rectangle 8cm by 5cm",
+      "8 x 5 = 40"
+    ],
+    "expect_topic": "fraction|perimeter",
+    "has_working": true
+  },
+  {
+    "file": "jhs1-maths-handwritten.jpg",
+    "grade": "B7",
+    "subject": "Mathematics",
+    "style": "hand",
+    "expected_lines": [
+      "Solve: 2x + 5 = 11",
+      "2x = 11 - 5",
+      "2x = 6",
+      "x = 3"
+    ],
+    "expect_topic": "equation",
+    "has_working": true
+  },
+  {
+    "file": "p4-english-handwritten.jpg",
+    "grade": "B4",
+    "subject": "English Language",
+    "style": "hand",
+    "expected_lines": [
+      "Underline the nouns:",
+      "The boy kicked the ball to his friend."
+    ],
+    "expect_topic": "noun",
+    "has_working": false
+  },
+  {
+    "file": "blank-page.jpg",
+    "expect_unreadable": true
+  },
+  {
+    "file": "dark-blurry-page.jpg",
+    "expect_unreadable": true
+  },
+  {
+    "file": "not-a-document.jpg",
+    "expect_unreadable": true
+  }
+]

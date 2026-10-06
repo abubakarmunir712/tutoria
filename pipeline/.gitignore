@@ -3,3 +3,7 @@
 __pycache__/
 *.pyc
 qdrant_storage/
+
+# OCR eval: real homework photos may show a child's name/work — keep them out of git
+eval/ocr/real/
+eval/ocr/last_report.json
