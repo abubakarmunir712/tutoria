@@ -40,21 +40,63 @@ _FOLLOWUP_RE = re.compile(
 )
 
 
+_PHOTO_QUOTE_RE = re.compile(r"\A> \*\*[^*]+\*\*\n((?:>.*(?:\n|\Z))+)")
+_MOVED_ON_RE = re.compile(r"\b(?:question|number|no\.?)\s*([2-9]|1\d)\b|\bnext (?:question|one)\b|\bsecond (?:question|one)\b", re.I)
+_NUMBERED_LINE_RE = re.compile(r"^\s*(?:q(?:uestion)?\s*)?\d+[.):]", re.I)
+
+
+def split_photo_reply(assistant_message: str) -> tuple[str, str] | None:
+    """(questions quoted at the top of a reply to a homework photo, the tutor's own text)."""
+    m = _PHOTO_QUOTE_RE.match(assistant_message)
+    if not m:
+        return None
+    lines = [line[1:].strip() for line in m.group(1).splitlines()]
+    quote = "\n".join(l for l in lines if l and not l.lower().startswith("student's working"))
+    return (quote, assistant_message[m.end():].strip()) if quote else None
+
+
+def _first_question(quote: str) -> str:
+    """Heading/instruction plus question 1 — what the tutor starts on."""
+    kept, numbered = [], 0
+    for line in quote.splitlines():
+        if _NUMBERED_LINE_RE.match(line):
+            numbered += 1
+            if numbered > 1:
+                break
+        kept.append(line)
+    return " ".join(kept)
+
+
 def build_retrieval_query(question: str, history: list[dict] | None = None) -> str:
     """
     The text to search the curriculum with. A bare reply to a tutoring question ("yes", "5",
-    "I don't know") or a pronoun follow-up ("why does that work?") says nothing about the
-    topic, so anchor it to the student's most recent substantive question. A message that
-    states its own topic is searched on its own, so switching topics mid-chat re-grounds.
+    "I don't know") or a short pronoun follow-up ("why does that work?") says nothing about the
+    topic, so anchor it to what the conversation is about. A message that states its own topic
+    is searched on its own, so switching topics mid-chat re-grounds.
+
+    The anchor is the student's most recent substantive question. After a homework photo it is
+    the photo's first question plus the tutor's last message, which names the problem being
+    worked on right now — so moving on to "question 2" re-grounds on question 2.
     """
     words = _WORD_RE.findall(question)
-    anchors = [
-        h["content"]
-        for h in (history or [])
-        if h.get("role") == "user" and len(_WORD_RE.findall(h.get("content", ""))) >= 5
-    ]
-    if anchors and (len(words) <= 4 or (len(words) <= 10 and _FOLLOWUP_RE.search(question))):
-        return f"{anchors[-1]} {question}"
+    anchor, photo_question, tutor_text = None, None, ""
+    for turn in history or []:
+        content = turn.get("content", "")
+        if turn.get("role") == "user" and len(_WORD_RE.findall(content)) >= 5:
+            anchor, photo_question = content, None  # a typed question replaces any photo
+        elif turn.get("role") == "assistant":
+            photo = split_photo_reply(content)
+            if photo:
+                photo_question, tutor_text = _first_question(photo[0]), photo[1]
+            elif photo_question:
+                tutor_text = content  # the tutor's latest message names the current problem
+    if photo_question:
+        # Once the tutor has moved on ("let's try question 2"), question 1 is stale: only the
+        # tutor's message names the problem now being worked on.
+        moved_on = _MOVED_ON_RE.search(tutor_text)
+        anchor = tutor_text[:240] if moved_on else f"{photo_question} {tutor_text[:240]}"
+    if anchor and (len(words) <= 4 or (len(words) <= 7 and _FOLLOWUP_RE.search(question))):
+        return f"{anchor} {question}"
     return question
 
 
