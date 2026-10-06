@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/api_client.dart';
@@ -75,12 +76,62 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _sendImage() async {
+  void _addAiMessage(String text, [List<ChatCitation> citations = const []]) {
+    if (!mounted) return;
+    setState(() => _messages.add(_ChatMessage.ai(text, citations)));
+  }
+
+  Future<void> _choosePhotoSource() async {
     if (_sending) return;
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked == null) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo of your homework'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from your photos'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source != null) await _sendImage(source);
+  }
+
+  Future<void> _sendImage(ImageSource source) async {
+    if (_sending) return;
+    XFile? picked;
+    try {
+      // Phone cameras take 8-12 MB photos; the text is just as readable at 1600 px, and the
+      // upload is several times faster on a mobile connection.
+      picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 80,
+      );
+    } on PlatformException {
+      _addAiMessage(
+        source == ImageSource.camera
+            ? "I can't use the camera yet. Allow camera access for Tutoria in your phone's "
+                  'Settings, or choose a photo from your gallery instead.'
+            : "I can't open your photos yet. Allow photo access for Tutoria in your phone's Settings.",
+      );
+      return;
+    }
+    if (picked == null || !mounted) return;
 
     final file = File(picked.path);
+    final history = _buildHistory();
     setState(() {
       _messages.add(_ChatMessage.image(file.path));
       _sending = true;
@@ -90,12 +141,15 @@ class _ChatScreenState extends State<ChatScreen> {
         image: file,
         grade: widget.grade,
         subject: widget.subject,
+        history: history,
       );
-      setState(() => _messages.add(_ChatMessage.ai(response.answer, response.citations)));
+      _addAiMessage(response.answer, response.citations);
     } on ApiException catch (e) {
-      setState(() => _messages.add(_ChatMessage.ai('Error: ${e.message}', const [])));
+      _addAiMessage('Error: ${e.message}');
+    } catch (_) {
+      _addAiMessage("I couldn't send that photo. Check your internet connection and try again.");
     } finally {
-      setState(() => _sending = false);
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -140,8 +194,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.photo_camera_outlined),
-                    onPressed: _sendImage,
-                    tooltip: 'Upload homework photo',
+                    onPressed: _choosePhotoSource,
+                    tooltip: 'Add a homework photo',
                   ),
                   Expanded(
                     child: TextField(

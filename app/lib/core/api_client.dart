@@ -157,6 +157,7 @@ class ApiClient {
     required File image,
     String? grade,
     String? subject,
+    List<Map<String, String>>? history,
   }) async {
     final token = await SecureStorage.instance.accessToken;
     final request = http.MultipartRequest('POST', _uri('/chat/ask-image'))
@@ -164,6 +165,8 @@ class ApiClient {
       ..files.add(await http.MultipartFile.fromPath('image', image.path));
     if (grade != null) request.fields['grade'] = grade;
     if (subject != null) request.fields['subject'] = subject;
+    // Multipart forms carry strings only, so prior turns go as a JSON string.
+    if (history != null && history.isNotEmpty) request.fields['history'] = jsonEncode(history);
 
     final streamed = await _client.send(request);
     final res = await http.Response.fromStream(streamed);

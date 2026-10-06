@@ -22,6 +22,10 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Tutoria uses the camera so you can take a photo of your homework question.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tutoria needs access to your photos so you can choose a picture of your homework question.</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
