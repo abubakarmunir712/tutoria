@@ -46,6 +46,7 @@ export class ChatService {
     if (dto.grade) form.append('grade', dto.grade);
     if (dto.subject) form.append('subject', dto.subject);
     form.append('top_k', String(dto.topK ?? 3));
+    if (dto.history) form.append('history', dto.history);
 
     const res = await fetch(`${this.baseUrl}/ask-image`, { method: 'POST', body: form });
     return this.handle(res);
