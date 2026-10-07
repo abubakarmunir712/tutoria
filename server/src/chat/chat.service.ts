@@ -13,6 +13,12 @@ export interface AskResponse {
   }>;
 }
 
+export interface TopicsResponse {
+  grade: string;
+  subject: string;
+  strands: Array<{ name: string; topics: Array<{ name: string; lessons: number }> }>;
+}
+
 @Injectable()
 export class ChatService {
   private readonly baseUrl: string;
@@ -50,6 +56,19 @@ export class ChatService {
 
     const res = await fetch(`${this.baseUrl}/ask-image`, { method: 'POST', body: form });
     return this.handle(res);
+  }
+
+  /** Strands and topics for a grade and subject, or null if the curriculum has none. */
+  async topics(grade: string, subject: string): Promise<TopicsResponse | null> {
+    const params = new URLSearchParams({ grade, subject });
+    const res = await fetch(`${this.baseUrl}/topics?${params.toString()}`);
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new InternalServerErrorException(
+        `AI service error (${res.status}): ${await res.text()}`,
+      );
+    }
+    return res.json() as Promise<TopicsResponse>;
   }
 
   private async handle(res: Response): Promise<AskResponse> {
