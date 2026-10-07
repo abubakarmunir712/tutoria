@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from llm import get_llm_provider  # noqa: E402
+from topics import topics_for  # noqa: E402
 from retrieval import (  # noqa: E402
     WEAK_MATCH_SCORE,
     build_retrieval_query,
@@ -103,6 +104,15 @@ def _answer_grounded(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/topics")
+def topics(grade: str, subject: str):
+    """The curriculum's strands and topics for a grade and subject, in curriculum order."""
+    strands = list(topics_for(grade, subject))
+    if not strands:
+        raise HTTPException(404, "No curriculum topics for this grade and subject")
+    return {"grade": grade, "subject": subject, "strands": strands}
 
 
 @app.post("/ask", response_model=AskResponse)
