@@ -3,50 +3,74 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
+import { Grade } from '@prisma/client';
+import { IsEnum, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentStudent } from '../auth/decorators/current-student.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { StudentsService } from './students.service';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { EnrollDto } from './dto/enroll.dto';
+import { CreateStudentDto } from './dto/create-student.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
+import { SetSubjectsDto } from './dto/set-subjects.dto';
+
+class SubjectsQuery {
+  @IsOptional()
+  @IsEnum(Grade)
+  grade?: Grade;
+}
 
 @UseGuards(JwtAuthGuard)
 @Controller('me')
 export class StudentsController {
   constructor(private readonly students: StudentsService) {}
 
-  @Get('profile')
-  getProfile(@CurrentStudent() studentId: string) {
-    return this.students.getProfile(studentId);
-  }
-
-  @Patch('profile')
-  updateProfile(
-    @CurrentStudent() studentId: string,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    return this.students.updateProfile(studentId, dto);
+  @Get()
+  getMe(@CurrentUser() userId: string) {
+    return this.students.getMe(userId);
   }
 
   @Get('subjects')
-  listSubjects() {
-    return this.students.listSubjects();
+  listSubjects(@Query() query: SubjectsQuery) {
+    return this.students.listSubjects(query.grade);
   }
 
-  @Post('enrollments')
-  enroll(@CurrentStudent() studentId: string, @Body() dto: EnrollDto) {
-    return this.students.enroll(studentId, dto.subjectId);
+  @Post('students')
+  createStudent(@CurrentUser() userId: string, @Body() dto: CreateStudentDto) {
+    return this.students.createStudent(userId, dto);
   }
 
-  @Delete('enrollments/:subjectId')
-  unenroll(
-    @CurrentStudent() studentId: string,
-    @Param('subjectId') subjectId: string,
+  @Patch('students/:id')
+  updateStudent(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateStudentDto,
   ) {
-    return this.students.unenroll(studentId, subjectId);
+    return this.students.updateStudent(userId, id, dto);
+  }
+
+  @Delete('students/:id')
+  @HttpCode(204)
+  async deleteStudent(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    await this.students.deleteStudent(userId, id);
+  }
+
+  @Put('students/:id/subjects')
+  setSubjects(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetSubjectsDto,
+  ) {
+    return this.students.setSubjects(userId, id, dto.subjectIds);
   }
 }

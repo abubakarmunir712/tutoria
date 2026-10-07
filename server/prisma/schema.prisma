@@ -24,17 +24,45 @@ enum Grade {
   SHS3
 }
 
-model Student {
+enum UserRole {
+  PARENT
+  STUDENT
+}
+
+enum SchoolType {
+  PRIVATE
+  PUBLIC
+}
+
+// A login. A parent signs up and adds their children; a student signs up for themselves.
+model User {
   id           String   @id @default(uuid())
+  fullName     String
   email        String   @unique
   phone        String   @unique
   passwordHash String
-  grade        Grade?
+  role         UserRole
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  enrollments   Enrollment[]
+  students      Student[]
   refreshTokens RefreshToken[]
+}
+
+// A learner profile: one of a parent's children, or a student's own profile.
+model Student {
+  id         String      @id @default(uuid())
+  userId     String
+  name       String
+  grade      Grade?
+  schoolType SchoolType?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@index([userId])
 }
 
 model Subject {
@@ -61,11 +89,11 @@ model Enrollment {
 
 model RefreshToken {
   id        String   @id @default(uuid())
-  studentId String
+  userId    String
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
   revokedAt DateTime?
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
