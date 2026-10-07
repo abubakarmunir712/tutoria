@@ -178,3 +178,5 @@ This is the client-facing, weeks-based breakdown (see [`PROJECT_BRIEF.md`](PROJE
 *Log milestone completions, scope changes, and client decisions here as they happen.*
 
 - [Date] — Milestone 1 test slice confirmed: Primary 4–6 Mathematics
+- 2026-10-07 — App redesigned to the approved screen designs (see [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)). Decision: parent accounts are in scope — a parent signs up, adds children (class, school type, subjects) and each child has their own tutor; a student can also sign up alone. Subscription plans, progress/badges/streaks, the parent dashboard's stats and notifications stay with Milestones 3 and 4 (the features behind them don't exist yet).
+- 2026-10-07 — Curriculum indexed for all 15 subject/phase sources (1,902 indicators); homework-photo flow (camera, confidence check, confirm-before-tutoring) and every-turn grounding in place; topic list per subject served from the indexed curriculum.
