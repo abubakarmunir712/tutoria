@@ -16,6 +16,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from curriculum_sources import SOURCES
+from topic_names import apply_topic_names
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
@@ -75,6 +76,9 @@ def main():
             print(f"   read {len(records)} records from {out.relative_to(ROOT)}")
         else:
             records = [asdict(r) for r in extract_source(source, args.skip_images)]
+            renamed = apply_topic_names(source.slug, records)
+            if renamed:
+                print(f"   applied stored topic names to {renamed} records")
             out.write_text(json.dumps(records, indent=2))
             print(f"   extracted {len(records)} records -> {out.relative_to(ROOT)}")
         if not records:

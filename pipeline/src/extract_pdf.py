@@ -52,6 +52,38 @@ PHASE_GRADES = {
 }
 
 
+# Header lines only: the header is the whole line, so anchor at its start (an indicator whose
+# text happens to say "strand 3: ..." in the middle of a row is not a header).
+STRAND_LINE_RE = re.compile(r"^\s*Strand\s*\d+\s*[-:–—.]\s*(.+)", re.IGNORECASE)
+SUBSTRAND_LINE_RE = re.compile(r"^\s*Sub-?\s?strand\s*\d+\s*[-:–—.]\s*(.+)", re.IGNORECASE)
+
+# Some sub-strands have no header of their own in the PDFs (B5 Mathematics' decimals and
+# percentages sit under the "Fractions" header). Their topic name is then taken from the content
+# standard: "Demonstrate understanding of decimals up to the thousandths" -> "Decimals".
+_CS_LEAD_RE = re.compile(
+    r"^(?:demonstrate|show|develop|apply|use|exhibit|acquire|recogni[sz]e)\b"
+    r"(?:\s+(?:an?|the))?"
+    r"(?:\s+(?:understanding|knowledge|skills?|ability|appreciation|awareness))?"
+    r"(?:\s+(?:and|or)\s+(?:the\s+)?(?:use|application|appreciation|skills?)(?:\s+of)?)?"
+    r"(?:\s+(?:of|in|about|for|to))?\s+",
+    re.IGNORECASE,
+)
+_CS_CUT_RE = re.compile(r"\s+(?:up to|using|through|by|such as|in order to|to solve|to|with|that)\b|[,;:(]", re.IGNORECASE)
+
+
+def infer_topic_name(content_standard_text: str) -> str:
+    text = re.sub(r"\s+", " ", content_standard_text).strip()
+    if not text:
+        return ""
+    text = _CS_LEAD_RE.sub("", text, count=1)
+    cut = _CS_CUT_RE.search(text)
+    if cut and cut.start() >= 8:
+        text = text[: cut.start()]
+    words = text.strip(" .").split()
+    text = " ".join(words[:8])
+    return text[:1].upper() + text[1:]
+
+
 def normalize_code(raw: str) -> str:
     code = re.sub(r"\s+", "", raw)
     code = re.sub(r"/JHS\d", "", code)
@@ -75,6 +107,9 @@ class CurriculumRecord:
     indicator_text: str
     exemplar: str
     images: list = field(default_factory=list)
+    # True when the PDF gave this sub-strand no header of its own, so its name was worked out from
+    # the content standard (see name_topics.py, which replaces those with proper topic names).
+    substrand_inferred: bool = False
 
 
 def lines_from_words(words, y_bucket=3):
@@ -410,6 +445,10 @@ def extract(
 ):
     records: list[CurriculumRecord] = []
     strand = substrand = None
+    header_pending = False  # a sub-strand header was seen and no indicator has used it yet
+    group_names: dict[tuple, str] = {}  # (grade, strand no., sub-strand no.) -> topic name
+    inferred_groups: set[tuple] = set()  # groups whose name was inferred, not read from a header
+    cs_memo: dict[str, str] = {}  # content-standard text seen so far, for continuation pages
     last_indicator = None
     images_by_indicator: dict[str, list] = {}
 
@@ -427,12 +466,17 @@ def extract(
             if is_progression_table(words, doc_indicator_x):
                 continue
 
-            s = STRAND_HEADER_RE.search(page_text)
-            if s:
-                strand = clean_header(s.group(1))
-            ss = SUBSTRAND_HEADER_RE.search(page_text)
-            if ss:
-                substrand = clean_header(ss.group(1))
+            # Headers can appear mid-page (the end of one sub-strand, then the next one's header),
+            # so collect them with their position and apply them in order alongside the indicators.
+            # (pdfplumber's own line grouping, not the y-buckets used for table columns: the words of a
+            # header like "Strand 1: ALL ABOUT US" sit a point or two apart and must stay together.)
+            events = []
+            for text_line in page.extract_text_lines():
+                hy, hline = text_line["top"], text_line["text"]
+                if m := SUBSTRAND_LINE_RE.match(hline):
+                    events.append((hy, "substrand", clean_header(m.group(1))))
+                elif m := STRAND_LINE_RE.match(hline):
+                    events.append((hy, "strand", clean_header(m.group(1))))
 
             indicator_x, core_x, exemplar_x = page_layout(words, doc_indicator_x)
             if indicator_x is None or (doc_indicator_x is not None and indicator_x > doc_indicator_x + 40):
@@ -440,7 +484,7 @@ def extract(
                 indicator_x = doc_indicator_x
             if core_x is None:
                 core_x = doc_core_x
-            if indicator_x is None or not strand or not substrand:
+            if indicator_x is None:
                 continue
 
             cs_words, ind_words, ex_words = split_columns(words, indicator_x, core_x, exemplar_x)
@@ -461,24 +505,59 @@ def extract(
             if indicators:
                 last_indicator = indicators[-1][0]
 
-            for code, _, ind_text, exemplar in indicators:
+            for cs_code, cs_text in standards.items():
+                if len(cs_text) > len(cs_memo.get(cs_code, "")):
+                    cs_memo[cs_code] = cs_text
+
+            next_event = 0
+            for code, y, ind_text, exemplar in indicators:
+                while next_event < len(events) and events[next_event][0] <= y + 2:
+                    _, kind, name = events[next_event]
+                    next_event += 1
+                    if kind == "strand":
+                        strand = name
+                    else:
+                        substrand, header_pending = name, True
+                if strand is None:
+                    continue  # front matter before the first strand header
                 if code.split(".")[0] not in PHASE_GRADES.get(phase, {code.split(".")[0]}):
                     continue
+
                 content_code = ".".join(code.split(".")[:4])
+                grade, strand_no, sub_no = code.split(".")[:3]
+                group = (grade, strand_no, sub_no)
+                if header_pending:
+                    group_names[group] = substrand
+                    inferred_groups.discard(group)
+                    header_pending = False
+                elif group not in group_names:
+                    # This sub-strand has no header of its own: name it from its content standard.
+                    inferred_groups.add(group)
+                    group_names[group] = infer_topic_name(clean_text(cs_memo.get(content_code, ""))) or substrand or ""
+                if not group_names[group]:
+                    # No header and no content standard to name it from: not a real indicator (the
+                    # PDFs' "how to read these codes" example table is the usual culprit).
+                    continue
                 records.append(
                     CurriculumRecord(
-                        grade=code.split(".")[0],
+                        grade=grade,
                         subject=subject,
                         phase=phase,
                         strand=strand,
-                        substrand=substrand,
+                        substrand=group_names[group],
                         content_standard_code=content_code,
-                        content_standard_text=clean_text(standards.get(content_code, "")),
+                        content_standard_text=clean_text(cs_memo.get(content_code, "")),
                         indicator_code=code,
                         indicator_text=clean_text(ind_text),
                         exemplar=clean_text(exemplar),
+                        substrand_inferred=group in inferred_groups,
                     )
                 )
+            for _, kind, name in events[next_event:]:  # headers below the last indicator apply to the next page
+                if kind == "strand":
+                    strand = name
+                else:
+                    substrand, header_pending = name, True
 
     # Same indicator can appear twice (e.g. repeated in a summary table); keep the fuller one.
     by_code: dict[str, CurriculumRecord] = {}
