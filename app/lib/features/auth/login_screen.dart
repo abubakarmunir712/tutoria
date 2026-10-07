@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
+
+import '../../core/design/design.dart';
+import '../onboarding/user_type_screen.dart';
 import 'auth_state.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,100 +14,181 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _identifier = TextEditingController();
+  final _password = TextEditingController();
 
   @override
   void dispose() {
-    _identifierController.dispose();
-    _passwordController.dispose();
+    _identifier.dispose();
+    _password.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final auth = context.read<AuthState>();
-    final ok = await auth.login(
-      identifier: _identifierController.text.trim(),
-      password: _passwordController.text,
+    final ok = await context.read<AuthState>().login(
+      identifier: _identifier.text.trim(),
+      password: _password.text,
     );
-    if (ok && mounted) {
-      Navigator.of(context).pushReplacementNamed('/dashboard');
-    }
+    if (ok && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     return Scaffold(
-      backgroundColor: TutoriaColors.blue,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            Image.asset('assets/images/icon_mark.png', height: 72, width: 72),
-            const SizedBox(height: 12),
-            const Text(
-              'Tutoria',
-              style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
+      backgroundColor: TColors.blue600,
+      body: Column(
+        children: [
+          HeroBackground(
+            child: SizedBox(
+              width: double.infinity,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    TSpace.page,
+                    TSpace.sm,
+                    TSpace.page,
+                    56,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Welcome back', style: Theme.of(context).textTheme.headlineSmall),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _identifierController,
-                        decoration: const InputDecoration(labelText: 'Email or phone'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(labelText: 'Password'),
-                        obscureText: true,
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 24),
-                      if (auth.error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Text(
-                            auth.error!,
-                            style: TextStyle(color: Theme.of(context).colorScheme.error),
-                          ),
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.zero,
                         ),
-                      ElevatedButton(
-                        onPressed: auth.isLoading ? null : _submit,
-                        child: auth.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('Log in'),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.arrow_back_rounded),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pushReplacementNamed('/signup'),
-                        child: const Text("Don't have an account? Sign up"),
+                      const SizedBox(height: TSpace.md),
+                      const Wordmark(onBlue: true, size: 34),
+                      const SizedBox(height: TSpace.lg),
+                      Text(
+                        'Welcome back!',
+                        style: TText.title.copyWith(
+                          color: Colors.white,
+                          fontSize: 30,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sign in to keep learning.',
+                        style: TText.body.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Transform.translate(
+              offset: const Offset(0, -28),
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: TColors.blue50,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(TRadius.xl),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    TSpace.page + 4,
+                    TSpace.xl + 4,
+                    TSpace.page + 4,
+                    TSpace.xl,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TTextField(
+                          controller: _identifier,
+                          hint: 'Email or phone number',
+                          icon: Icons.person_outline_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.username],
+                          validator: (v) => (v ?? '').trim().isEmpty
+                              ? 'Enter your email or phone number'
+                              : null,
+                        ),
+                        const SizedBox(height: TSpace.md),
+                        TTextField(
+                          controller: _password,
+                          hint: 'Password',
+                          icon: Icons.lock_outline_rounded,
+                          obscure: true,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
+                          onSubmitted: (_) => _submit(),
+                          validator: (v) =>
+                              (v ?? '').isEmpty ? 'Enter your password' : null,
+                        ),
+                        if (auth.error != null) ...[
+                          const SizedBox(height: TSpace.md),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(TSpace.md),
+                            decoration: BoxDecoration(
+                              color: TColors.dangerTint,
+                              borderRadius: BorderRadius.circular(TRadius.md),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: TColors.danger,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    auth.error!,
+                                    style: TText.body.copyWith(
+                                      color: TColors.danger,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: TSpace.xl),
+                        TButton(
+                          label: 'Sign In',
+                          loading: auth.isLoading,
+                          onPressed: _submit,
+                        ),
+                        const SizedBox(height: TSpace.md),
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context)
+                                .pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const UserTypeScreen(),
+                                  ),
+                                ),
+                            child: const Text(
+                              'New to Tutoria? Create an account',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -13,4 +13,9 @@ const gradeLabels = {
   'SHS3': 'SHS 3',
 };
 
+/// Every grade the app offers, in school order.
+const gradeCodes = ['B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'SHS1', 'SHS2', 'SHS3'];
+
 String gradeLabel(String? code) => gradeLabels[code] ?? code ?? '';
+
+const schoolTypeLabels = {'PRIVATE': 'Private', 'PUBLIC': 'Public'};
