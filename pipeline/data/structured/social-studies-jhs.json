@@ -3,8 +3,8 @@
     "grade": "B7",
     "subject": "Social Studies",
     "phase": "JHS",
-    "strand": "Environmental Issues",
-    "substrand": "THE FAMILY",
+    "strand": "NATIONHOOD",
+    "substrand": "THE REPUBLICS",
     "content_standard_code": "B7.1.1.2",
     "content_standard_text": "",
     "indicator_code": "B7.1.1.2.1",
@@ -18,14 +18,15 @@
       "images/social-studies-jhs-page32_4.png",
       "images/social-studies-jhs-page32_5.png",
       "images/social-studies-jhs-page32_6.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
     "subject": "Social Studies",
     "phase": "JHS",
-    "strand": "Environmental Issues",
-    "substrand": "THE FAMILY",
+    "strand": "NATIONHOOD",
+    "substrand": "THE REPUBLICS",
     "content_standard_code": "B7.1.1.1",
     "content_standard_text": "Demonstrate skills in dealing with environmental challenges",
     "indicator_code": "B7.1.1.1.1",
@@ -37,7 +38,8 @@
       "images/social-studies-jhs-page35_0.png",
       "images/social-studies-jhs-page36_0.png",
       "images/social-studies-jhs-page37_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -46,7 +48,7 @@
     "strand": "ENVIRONMENT",
     "substrand": "ENVIRONMENTAL ISSUES",
     "content_standard_code": "B7.1.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate skills in dealing with environmental challenges",
     "indicator_code": "B7.1.1.1.5",
     "indicator_text": "Discuss the effects of poor sanitation practices Demonstrate skills in dealing with environmental challenges",
     "exemplar": "6. Identify different ways of managing sanitation problems. 7. Embark on a project with the aim of managing sanitation problems in the community. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS B7/JHS1 1.1.2.1. Examine the sources of energy. Exemplars: 1. Explain energy. 2. Through the use of internet, videos or pictures, describe the sources of energy in Ghana, including fuel wood, hydro, solar and thermal. 3. In groups, categorise sources of energy into renewable and non-renewable. INDICATORS AND EXEMPLARS 1. Examine the benefits of using renewable energy. 2. Examine the benefits of using non-renewable energy sources. 3. In groups, let learners discuss and design posters to show how different sources of energy are used. INDICATORS AND EXEMPLARS 4. In groups, let learners discuss how sun or wind can be used to heat or perform work. 5. Through group discussion, come out with ways of using energy. 6. In groups, discuss why Ghana sometimes imports energy. STRAND 1: ENVIRONMENT SUB-STRAND 2: MAPPING SKILLS INDICATORS AND EXEMPLARS",
@@ -55,7 +57,8 @@
       "images/social-studies-jhs-page39_0.png",
       "images/social-studies-jhs-page40_0.png",
       "images/social-studies-jhs-page41_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -70,7 +73,8 @@
     "exemplar": "1. Explain the following concepts: \u201cmaps\u201d and \u201cscale\u201d. 2. Identify types of maps, including street maps, maps showing landscape features and national maps using an atlas. 3. Explore the importance of maps to different people, including airline managers, fisherfolk, farmers and, for example, a family which has moved from a rural area to a city. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page42_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -79,13 +83,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "MAPPING SKILLS",
     "content_standard_code": "B7.1.2.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate a range of mapping skills",
     "indicator_code": "B7.1.2.1.4",
     "indicator_text": "Identify components of maps, including north arrow, scale, map key Demonstrate a range of allowing representation of physical features (including rivers, lakes, mapping skills mountains and coastline) and human features (including settlements, plantations and industrial developments) using names, symbols and colours.",
     "exemplar": "5. Sketch a map of the school compound, marking the main features. 6. Locate some important landmarks in the community using maps. For example, the bank is 500 metres north of the Junior High School. NaCCA, Ministry of Education 2021 STRAND 1: ENVIRONMENT SUB-STRAND 3: UNDERSTANDING OUR NATURAL WORLD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page43_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -101,7 +106,8 @@
     "images": [
       "images/social-studies-jhs-page44_0.png",
       "images/social-studies-jhs-page45_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -116,7 +122,8 @@
     "exemplar": "1. Explain natural disasters. 2. Watch documentaries on some natural disasters. 3. Mention examples of natural disasters, including flood, drought, landslide, wildfire, earthquake and sea erosion. 4. Identify natural disasters in Ghana. 5. Suggest ways to manage disasters. 6. Discuss the role of institutions responsible for early detection and management of natural disasters in Ghana, including Ghana Meteorological Agency (GMA), National Disaster Management Organisation (NADMO). STRAND 2: FAMILY LIFE SUB-STRAND 1: ADOLESCENT REPRODUCTIVE HEALTH INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page46_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -131,7 +138,8 @@
     "exemplar": "1. Explain the concepts: i. Adolescence ii. Reproductive Health 2. Discuss adolescent behaviours, including chastity that would support reproductive health. 3. Discuss in groups why healthy behaviour during adolescence is important, both for the individual and for the country as a whole. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page47_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -140,13 +148,14 @@
     "strand": "FAMILY LIFE",
     "substrand": "ADOLESCENT REPRODUCTIVE HEALTH",
     "content_standard_code": "B7.2.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of adolescent behaviour and reproductive health issues",
     "indicator_code": "B7.2.1.1.4",
     "indicator_text": "Invite a resource person, such as a doctor or nurse, to talk about how Demonstrate some adolescent behaviours can harm their reproductive health and understanding of cause other problems. adolescent behaviour and reproductive health issues",
     "exemplar": "5. Explain changes that adolescents go through (physical, cognitive, social and emotional). 6. Discuss some challenges faced by adolescents. NaCCA, Ministry of Education 2021 STRAND 2: FAMILY LIFE SUB-STRAND 3: SOCIALISATION INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page48_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -162,7 +171,8 @@
     "images": [
       "images/social-studies-jhs-page49_0.png",
       "images/social-studies-jhs-page50_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -178,7 +188,8 @@
     "images": [
       "images/social-studies-jhs-page51_0.png",
       "images/social-studies-jhs-page52_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -194,7 +205,8 @@
     "images": [
       "images/social-studies-jhs-page53_0.png",
       "images/social-studies-jhs-page54_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -209,7 +221,8 @@
     "exemplar": "1. Explain the concept of \u201ccitizenship\u201d. 2. Discuss the various ways of acquiring citizenship in Ghana, including citizenship by birth, adoption, registration and naturalisation. 3. Examine the responsibilities of a Ghanaian citizen, including obeying rules and regulations, protecting state property, reporting crime, respecting national symbols and payment of taxes, among others. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page55_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -218,13 +231,14 @@
     "strand": "LAW AND ORDER",
     "substrand": "CITIZENSHIP AND HUMAN RIGHTS",
     "content_standard_code": "B7.4.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Analyse the responsibilities of a citizen",
     "indicator_code": "B7.4.1.1.4",
     "indicator_text": "In groups, discuss good working attitudes, including honesty, Analyse the willingness to report crime and being punctual and regular at events responsibilities of a and at the workplace. citizen",
     "exemplar": "5. Dramatise the various ways (communal labour, reporting crime) citizens contribute to the development of the country. NaCCA, Ministry of Education 2021 STRAND 5: SOCIO-ECONOMIC DEVELOPMENT SUB-STRAND 1: HUMAN RESOURCE DEVELOPMENT INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page56_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -239,7 +253,8 @@
     "exemplar": "1. Explain the concepts: i. Human resource ii. Human resource development 2. Identify ways of developing human resource in Ghana, including education, training and retraining, career counselling, performing leadership roles and mentoring. 3. Discuss the importance of human resource development in Ghana. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page57_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -248,13 +263,14 @@
     "strand": "SOCIO-ECONOMIC DEVELOPMENT",
     "substrand": "HUMAN RESOURCE DEVELOPMENT",
     "content_standard_code": "B7.5.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate knowledge of human resource development in Ghana",
     "indicator_code": "B7.5.1.1.4",
     "indicator_text": "Assess the challenges associated with human resource development Demonstrate knowledge in Ghana. of human resource development in Ghana",
     "exemplar": "5. Suggest solutions to problems facing human resource development in Ghana. NaCCA, Ministry of Education 2021 STRAND 5: SOCIO-ECONOMIC DEVELOPMENT SUB-STRAND 2: FINANCIAL AND INVESTMENT ISSUES INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page58_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -269,7 +285,8 @@
     "exemplar": "1. Explain the concept of social security. 2. Discuss the features of social security, including the law which established it. 3. Identify types of social security schemes, including the Pension Fund. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page59_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -278,13 +295,14 @@
     "strand": "SOCIO-ECONOMIC DEVELOPMENT",
     "substrand": "FINANCIAL AND INVESTMENT ISSUES",
     "content_standard_code": "B7.5.2.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of social security and pension issues",
     "indicator_code": "B7.5.2.1.4",
     "indicator_text": "Think-pair-share the benefits of social security to the individual Demonstrate understanding of social security and pension issues",
     "exemplar": "5. Create a poster on the benefits of social security. NaCCA, Ministry of Education 2021 STRAND 5: SOCIO-ECONOMIC DEVELOPMENT SUB-STRAND 3:TOURISM INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page60_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -299,7 +317,8 @@
     "exemplar": "1. Explain the concepts: i. Tourism ii. Leisure 2. Identify some attractive places or sceneries in your locality. 3. Examine reasons for which people go on tour to different places. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page61_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -308,13 +327,14 @@
     "strand": "SOCIO-ECONOMIC DEVELOPMENT",
     "substrand": "TOURISM",
     "content_standard_code": "B7.5.3.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate knowledge on how tourism and leisure promote national development",
     "indicator_code": "B7.5.3.1.4",
     "indicator_text": "Discuss the economic and social importance of tourism to the Demonstrate nation\u2019s development. knowledge on how tourism and leisure promote national development",
     "exemplar": "5. Explain challenges faced in the tourism industry. 6. Suggest ways of solving the challenges faced in the tourism industry. NaCCA, Ministry of Education 2021 CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page62_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -323,13 +343,14 @@
     "strand": "SOCIO-ECONOMIC DEVELOPMENT",
     "substrand": "TOURISM",
     "content_standard_code": "B7.5.3.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate knowledge on how tourism and leisure promote national development",
     "indicator_code": "B7.5.3.1.7",
     "indicator_text": "Discuss ways of promoting tourism in Ghana. Demonstrate knowledge on how tourism and leisure promote national development (CONTINUED)",
     "exemplar": "NaCCA, Ministry of Education 2021 STRAND 6: NATIONHOOD SUB-STRAND 1: INDEPENDENT GHANA INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page63_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -344,7 +365,8 @@
     "exemplar": "1. Show documentaries or listen to personal accounts on the 28th February riots in Accra. OR Visit the spot where the ex-servicemen were killed. 2. Discuss the documentaries or what was witnessed on the visit. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page64_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -353,7 +375,7 @@
     "strand": "NATIONHOOD",
     "substrand": "INDEPENDENT GHANA",
     "content_standard_code": "B7.6.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of how Ghana became an independent nation",
     "indicator_code": "B7.6.1.1.3",
     "indicator_text": "Discuss the reasons for the formation of the Watson commission. Demonstrate understanding of how Ghana became an independent nation",
     "exemplar": "4. Examine how the Watson Commission helped the move towards independence. 5. With the use of the Internet or any other sources of information, write down the bio data of the three ex-service men (Sgt. Adjetey, Sgt. Odartey Lamptey and Corporal Attipoe) and how this can inspire learners. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS",
@@ -362,7 +384,8 @@
       "images/social-studies-jhs-page67_0.png",
       "images/social-studies-jhs-page71_0.png",
       "images/social-studies-jhs-page72_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -378,7 +401,8 @@
     "images": [
       "images/social-studies-jhs-page66_0.png",
       "images/social-studies-jhs-page68_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B7",
@@ -387,14 +411,15 @@
     "strand": "NATIONHOOD",
     "substrand": "INDEPENDENT GHANA",
     "content_standard_code": "B7.6.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of how Ghana became an independent nation",
     "indicator_code": "B7.6.1.1.4",
     "indicator_text": "Examine why a new constitution was drawn up in 1954 (for example, Demonstrate the CPP was dissatisfied with the provisions of the 1950 constitution understanding of how and called for a new constitution to be drawn up for the Gold Coast). Ghana became an independent nation",
     "exemplar": "5. Discuss what happened after the CPP won the 1956 election. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page69_0.png",
       "images/social-studies-jhs-page70_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -410,7 +435,8 @@
     "images": [
       "images/social-studies-jhs-page73_0.png",
       "images/social-studies-jhs-page74_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -425,7 +451,8 @@
     "exemplar": "1. Explain energy conservation. 2. Discuss responsible use of energy to minimise economic and environmental costs. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page75_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -434,13 +461,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "ENVIRONMENTAL ISSUES",
     "content_standard_code": "B8.1.1.2",
-    "content_standard_text": "",
+    "content_standard_text": "Analyse the sources and ways of conserving energy in Ghana",
     "indicator_code": "B8.1.1.2.3",
     "indicator_text": "Role play how different members of the community might Analyse the sources conserve energy (e.g. a parent of four, a headteacher, a and ways of shopkeeper). conserving energy in Ghana",
     "exemplar": "4. Debate the need for energy conservation. 5. Apply the knowledge and skills acquired to help conserve energy in learners\u2019 homes and school, including turning off the light when not in use, ironing things in bulk, among others. NaCCA, Ministry of Education 2021 CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page76_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -449,13 +477,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "ENVIRONMENTAL ISSUES",
     "content_standard_code": "B8.1.1.2",
-    "content_standard_text": "",
+    "content_standard_text": "Analyse the sources and ways of conserving energy in Ghana",
     "indicator_code": "B8.1.1.2.6",
     "indicator_text": "Project work: Use sun or wind to generate energy. Analyse the sources and ways of conserving energy in Ghana",
     "exemplar": "NaCCA, Ministry of Education 2021 STRAND 1: ENVIRONMENT SUB-STRAND 3: UNDERSTANDING OUR NATURAL INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page77_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -471,7 +500,8 @@
     "images": [
       "images/social-studies-jhs-page78_0.png",
       "images/social-studies-jhs-page79_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -486,7 +516,8 @@
     "exemplar": "1. Watch some documentaries on natural disasters. 2. Examine natural disasters and share the understanding of the term, including the idea that it involves great damage and also loss of lives. Examples of natural disasters are flooding, rainstorms, earthquake, volcanoes, wildfires and drought. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page80_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -495,13 +526,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "UNDERSTANDING OUR NATURAL WORLD",
     "content_standard_code": "B8.1.3.2",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of natural disasters and their management",
     "indicator_code": "B8.1.3.2.3",
     "indicator_text": "Examine the causes of flooding, including human action. For example Demonstrate urban development which can make flooding more likely or more understanding of natural extreme. disasters and their management",
     "exemplar": "4. Investigate the effects of flooding on the environment NaCCA, Ministry of Education 2021 CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page81_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -510,13 +542,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "UNDERSTANDING OUR NATURAL WORLD",
     "content_standard_code": "B8.1.3.2",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate understanding of natural disasters and their management",
     "indicator_code": "B8.1.3.2.5",
     "indicator_text": "Carry out a project to raise awareness in the community about the Demonstrate need for certain flood control measures and careful planning of any understanding of natural new development. disasters and their management",
     "exemplar": "NaCCA, Ministry of Education 2021 STRAND 1: ENVIRONMENT SUB-STRAND 2: MAPPING SKILLS INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page82_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -531,7 +564,8 @@
     "exemplar": "1. Sketch a map of your school compound. 2. Draw a diagram showing an eight-point compass (showing North, South, East and West; North East, North West, South East, South West). 3. Using a map with grid squares, locate some important landmarks. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page83_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -540,13 +574,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "MAPPING SKILLS",
     "content_standard_code": "B8.1.2.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate skills in sketching maps and interpreting landscapes from maps",
     "indicator_code": "B8.1.2.1.4",
     "indicator_text": "Draw/ sketch the map of the community indicating important Demonstrate skills in landmarks. sketching maps and interpreting landscapes from maps",
     "exemplar": "5. Sketch a map of the school compound to scale. 6. Show directions to important places in the community. 7. Sketch maps showing the positions or directions to your home using a compass directions. NaCCA, Ministry of Education 2021 STRAND 2: FAMILY LIFE SUB-STRAND 2:THE FAMILY INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page84_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -562,7 +597,8 @@
     "images": [
       "images/social-studies-jhs-page85_0.png",
       "images/social-studies-jhs-page86_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -578,7 +614,8 @@
     "images": [
       "images/social-studies-jhs-page87_0.png",
       "images/social-studies-jhs-page88_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -593,14 +630,15 @@
     "exemplar": "1. Explain what population structure means. 2. Draw/sketch the population structure of your school. 3. Examine the population structure of Ghana as set out in a population pyramid. 4. Examine the population structure of any developed country in the world, for example, China, Norway, Sweden, Singapore, Japan, and Canada. 5. Discuss the population structures of low, middle and high-income countries. 6. Suggest reasons for the population pyramids of low, middle and high- income countries with different shapes, including smaller families, higher standards of living, and high-quality healthcare. STRAND 3: SENSE OF PURPOSE SUB-STRAND 2:THE INDIVIDUAL AND THE COMMUNITY INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page89_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
     "subject": "Social Studies",
     "phase": "JHS",
     "strand": "SENSE OF PURPOSE",
-    "substrand": "THE INDIVIDUAL AND THE COMMUNITY",
+    "substrand": "Community Roles and Decisions",
     "content_standard_code": "B8.3.2.1",
     "content_standard_text": "Demonstrate knowledge of the role of the individual in the community",
     "indicator_code": "B8.3.2.1.1",
@@ -608,30 +646,32 @@
     "exemplar": "1. Explain the concept of community. 2. Watch a documentary about different communities and discuss observations. 3. Explain what community development involves (the values vision, initiative and drive in the process of community development). CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page90_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
     "subject": "Social Studies",
     "phase": "JHS",
     "strand": "SENSE OF PURPOSE",
-    "substrand": "THE INDIVIDUAL AND THE COMMUNITY",
+    "substrand": "Community Roles and Decisions",
     "content_standard_code": "B8.3.2.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate knowledge of the role of the individual in the community",
     "indicator_code": "B8.3.2.1.4",
     "indicator_text": "Explain the factors to be considered in community decision-making Demonstrate process, including investigating, developing and evaluating alternatives. knowledge of the role of the individual in the community",
     "exemplar": "5. Invite a resource person to talk about the importance of community development. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS 6. Identify a specific need or problem of the community and show how learners can help solve it.",
     "images": [
       "images/social-studies-jhs-page91_0.png",
       "images/social-studies-jhs-page93_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
     "subject": "Social Studies",
     "phase": "JHS",
     "strand": "SENSE OF PURPOSE",
-    "substrand": "THE INDIVIDUAL AND THE COMMUNITY",
+    "substrand": "Community Volunteerism",
     "content_standard_code": "B8.3.1.1",
     "content_standard_text": "",
     "indicator_code": "B8.3.1.1.2",
@@ -639,7 +679,8 @@
     "exemplar": "1. Explain the concept of volunteerism. 2. Examine the ways by which one can volunteer in the community responsibly, including performing household chores, shopping or cleaning for an elderly person and helping clean the community. 3. Identify some volunteering roles in the community and their contribution to community development, including reporting crime in the community to the police and avoiding taking the law into one\u2019s own hands. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page92_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -654,7 +695,8 @@
     "exemplar": "1. Explain the concept \u201chuman rights\u201d. 2. Examine the United Nations declaration on human rights. 3. Identify some examples of human rights enshrined in the 1992 constitution. 4. Assess the importance of the protection of human rights. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page94_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -663,13 +705,14 @@
     "strand": "LAW AND ORDER",
     "substrand": "CITIZENSHIP AND HUMAN RIGHTS",
     "content_standard_code": "B8.4.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Investigate the rights and responsibilities of a citizen",
     "indicator_code": "B8.4.1.1.5",
     "indicator_text": "Examine the rights and responsibilities of a citizen. Investigate the Rights Responsibilities rights and Right to life Obeying rules and regulations responsibilities of a Right to education Protecting public property citizen Right to work Reporting criminals",
     "exemplar": "6. Role play rights and responsibilities of citizens. 7. Undertake a project in the community on citizens\u2019 rights and how to safeguard them (collect data on human right issues in the community). NaCCA, Ministry of Education 2021 STRAND 4: LAW AND ORDER SUB-STRAND 2: CONFLICT PREVENTION AND MANAGEMENT INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page95_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -686,7 +729,8 @@
       "images/social-studies-jhs-page96_0.png",
       "images/social-studies-jhs-page97_0.png",
       "images/social-studies-jhs-page98_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -701,7 +745,8 @@
     "exemplar": "1. Explain the following concepts: i. Employment ii. Employer iii. Employee 2. Discuss the obligations of an employer in social security and pension schemes, including registering employees and paying their contributions regularly. 3. In groups, discuss the obligations of an employee towards social security and pension schemes, including checking statement of contribution regularly and updating their records. STRAND 5: SOCIO-ECONOMIC DEVELOPMENT SUB-STRAND 3:TOURISM INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page99_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -717,7 +762,8 @@
     "images": [
       "images/social-studies-jhs-page100_0.png",
       "images/social-studies-jhs-page101_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -732,7 +778,8 @@
     "exemplar": "1. Use the Internet, print media and oral sources to find out how the First Republic was established. 2. Discuss the outcome of 27 April 1960 referendum. 3. Discuss the outcome of 27 April 1960 presidential elections. 4. Dramatise the inauguration of Kwame Nkrumah as president of the First Republic on 1 July 1960 INDICATORS AND EXEMPLARS 5. Produce a chart showing major political events from 1951 to1960.",
     "images": [
       "images/social-studies-jhs-page102_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -748,7 +795,8 @@
     "images": [
       "images/social-studies-jhs-page103_0.png",
       "images/social-studies-jhs-page104_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -763,7 +811,8 @@
     "exemplar": "1. Use the internet, print media and oral sources to find out how the Second Republic was established. 2. Discuss the outcome of the 1969 general elections. 3. Dramatise the handing over of power from the National Liberation Council (NLC) to Dr K. A Busia\u2019s Progress Party. 4. Compare the First Republican Constitution and the second Republican Constitution. 2021 INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page105_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B8",
@@ -779,7 +828,8 @@
     "images": [
       "images/social-studies-jhs-page106_0.png",
       "images/social-studies-jhs-page107_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -794,7 +844,8 @@
     "exemplar": "1. Explain what air pollution means. 2. Identify activities in the environment that lead to air pollution, including fumes from vehicles, industry and smoke from fires. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page108_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -803,13 +854,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "ENVIRONMENTAL ISSUES",
     "content_standard_code": "B9.1.1.1",
-    "content_standard_text": "",
+    "content_standard_text": "Demonstrate skills in dealing with environmental challenges",
     "indicator_code": "B9.1.1.1.3",
     "indicator_text": "Discuss the effects of air pollution, including causing health problems Demonstrate skills in such as asthma. dealing with environmental challenges",
     "exemplar": "4. Discuss ways to prevent air pollution. 5. Do a project in the community to educate members on the ways to reduce air pollution. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page109_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -824,7 +876,8 @@
     "exemplar": "1. Identify global energy sources and conservation in countries such as Ghana, United Kingdom, Germany. 2. With the use of the Internet, research alternative energy sources and do a presentation in class. 3. Discuss gender issues related to energy production, supply and usage (Access to energy resources affects quality of life; some segments of the society are more vulnerable to impact of energy choices than others). 4. Describe the processes and devices for measuring and metering energy consumption. 5. In groups, create posters on the advantages of energy conservation to educate others in the community, including saving money, making the most of our scarce energy resources and reducing air pollution. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page110_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -833,13 +886,14 @@
     "strand": "ENVIRONMENT",
     "substrand": "ENVIRONMENTAL ISSUES",
     "content_standard_code": "B9.1.1.2",
-    "content_standard_text": "",
+    "content_standard_text": "Evaluate the sources and ways of conserving energy",
     "indicator_code": "B9.1.1.2.6",
     "indicator_text": "Present a report on energy conservation education that you have Evaluate the sources undertaken. and ways of conserving energy",
     "exemplar": "NaCCA, Ministry of Education 2021 STRAND 1: ENVIRONMENT SUB-STRAND 4: OUR NATURAL AND HUMAN RESOURCES INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page111_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -854,7 +908,8 @@
     "exemplar": "1. Explain what is meant by natural resources. 2. Through the use of videos or pictures, identify the natural resources of the country, including renewable (for example timber) and non- renewable resources (such as gold, bauxite and oil). 3. On the map of Ghana, show the location of the natural resources. 4. Discuss efficient ways of exploiting natural resources. INDICATORS AND EXEMPLARS 5. Explain the importance of natural resources for the development of the country. 6. Discuss the difficulty in exploiting natural resources effectively, including low level of technology, limited technical expertise and limited capital resources.",
     "images": [
       "images/social-studies-jhs-page112_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -871,7 +926,8 @@
       "images/social-studies-jhs-page113_0.png",
       "images/social-studies-jhs-page114_0.png",
       "images/social-studies-jhs-page115_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -887,7 +943,8 @@
     "images": [
       "images/social-studies-jhs-page116_0.png",
       "images/social-studies-jhs-page117_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -903,7 +960,8 @@
     "images": [
       "images/social-studies-jhs-page118_0.png",
       "images/social-studies-jhs-page119_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -919,7 +977,8 @@
     "images": [
       "images/social-studies-jhs-page120_0.png",
       "images/social-studies-jhs-page121_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -934,7 +993,8 @@
     "exemplar": "1. Explain the concept of national identity. 2. Sing patriotic songs and discuss how songs promote national identity. 3. With the use of videos or pictures, identify some national and traditional symbols and discuss their features and significance. For example, the National Flag, Coat of Arms, the Staff of Office of the President, the Mace, Adinkra and other Ghanaian symbols CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page122_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -943,13 +1003,14 @@
     "strand": "SENSE OF PURPOSE",
     "substrand": "CULTURE AND NATIONAL IDENTITY",
     "content_standard_code": "B9.3.3.1",
-    "content_standard_text": "",
+    "content_standard_text": "Evaluate the place of culture in national identity",
     "indicator_code": "B9.3.3.1.4",
     "indicator_text": "Interpret some national and traditional symbols and evaluate their Evaluate the place of importance in fostering national unity. culture in national identity",
     "exemplar": "5. Discuss ways of fostering national unity and defending the integrity of the nation. 6. Discuss how national ceremonies can be used to foster national unity. 7. Discuss how respecting the customs and culture of other groups plays a part in celebrating diversity in Ghana and helps draw the whole nation together. For example, festivals such as Homowo celebrated by the Gas, Hogbetsoto by the Anlos, Kundum by the Nzema. NaCCA, Ministry of Education 2021 STRAND 4: LAW AND ORDER SUB-STRAND 3: THE 1992 CONSTITUTION INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page123_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -965,7 +1026,8 @@
     "images": [
       "images/social-studies-jhs-page124_0.png",
       "images/social-studies-jhs-page125_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -981,7 +1043,8 @@
     "images": [
       "images/social-studies-jhs-page126_0.png",
       "images/social-studies-jhs-page127_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -997,7 +1060,8 @@
     "images": [
       "images/social-studies-jhs-page128_0.png",
       "images/social-studies-jhs-page129_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1013,7 +1077,8 @@
     "images": [
       "images/social-studies-jhs-page130_0.png",
       "images/social-studies-jhs-page131_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1028,7 +1093,8 @@
     "exemplar": "7. Assess the role of the Electoral Commission. NaCCA, Ministry of Education 2021 INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page132_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1043,7 +1109,8 @@
     "exemplar": "1. Explain the concept of decentralisation. 2. Describe the structure of the District Assembly as a decentralised arm of government. 3. Examine the role of District Assemblies in the development of the districts. INDICATORS AND EXEMPLARS 4. Examine the contribution of the Assemblies, including Metropolitan, Municipal, District. 5. Invite a resource person to talk about the workings of the MMDAs.",
     "images": [
       "images/social-studies-jhs-page133_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1059,7 +1126,8 @@
     "images": [
       "images/social-studies-jhs-page134_0.png",
       "images/social-studies-jhs-page135_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1068,13 +1136,14 @@
     "strand": "LAW AND ORDER",
     "substrand": "PROMOTING DEMOCRACY AND POLITICAL STABILITY",
     "content_standard_code": "B9.4.5.3",
-    "content_standard_text": "",
+    "content_standard_text": "Evaluate the importance of political stability in Ghana\u2019s development",
     "indicator_code": "B9.4.5.3.5",
     "indicator_text": "Suggest ways of promoting political stability in Ghana. Evaluate the importance of political stability in Ghana\u2019s development",
     "exemplar": "NaCCA, Ministry of Education 2021 STRAND 5: SOCIO-ECONOMIC DEVELOPMENT SUB-STRAND 4: SCIENCE AND TECHNOLOGY INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page136_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1091,7 +1160,8 @@
       "images/social-studies-jhs-page137_0.png",
       "images/social-studies-jhs-page138_0.png",
       "images/social-studies-jhs-page139_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1106,7 +1176,8 @@
     "exemplar": "1. Discuss the provisions under National Pensions Act 766. 2. In small groups, do a presentation on the provisions under PNDC Law 247. CONTENT STANDARD INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page140_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1115,13 +1186,14 @@
     "strand": "SOCIO-ECONOMIC DEVELOPMENT",
     "substrand": "FINANCIAL AND INVESTMENT ISSUES",
     "content_standard_code": "B9.5.2.1",
-    "content_standard_text": "",
+    "content_standard_text": "Show understanding of the provisions under National Pensions Act 766 and PNDC Law 247",
     "indicator_code": "B9.5.2.1.3",
     "indicator_text": "Invite a resource person to talk about social security in Ghana. Show understanding of the provisions under National Pensions Act 766 and PNDC Law 247",
     "exemplar": "4. In small groups, do a presentation on the benefits under the Three Tier Pension Scheme, including Tier 1, Tier 2 and Tier 3. 5. Research the application processes for the various SSNIT benefits. NaCCA, Ministry of Education 2021 STRAND 6: NATIONHOOD SUB-STRAND 2: THE REPUBLICS INDICATORS AND EXEMPLARS",
     "images": [
       "images/social-studies-jhs-page141_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1137,7 +1209,8 @@
     "images": [
       "images/social-studies-jhs-page142_0.png",
       "images/social-studies-jhs-page143_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   },
   {
     "grade": "B9",
@@ -1166,6 +1239,7 @@
       "images/social-studies-jhs-page156_0.png",
       "images/social-studies-jhs-page157_0.png",
       "images/social-studies-jhs-page158_0.png"
-    ]
+    ],
+    "substrand_inferred": false
   }
 ]
