@@ -11,3 +11,6 @@ build/
 .env
 .env.*
 !.env.example
+
+# local debugging environment (scripts/dev): database, logs, pids, model cache
+.dev/

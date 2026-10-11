@@ -1,0 +1,22 @@
+{
+  // F5 here runs the app against the server started by `scripts/dev up` (it writes
+  // app/dart_defines.local.json with this machine's current IP; run it again if your IP changes).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Tutoria (local server)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "app",
+      "program": "lib/main.dart",
+      "args": ["--dart-define-from-file=dart_defines.local.json"]
+    },
+    {
+      "name": "Tutoria (production server)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "app",
+      "program": "lib/main.dart"
+    }
+  ]
+}

@@ -22,6 +22,15 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Lets debug builds reach the dev server on this machine's local IP over HTTP.
+		     Everything else (including production) still has to use HTTPS. -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Tutoria connects to the development server on your local network while testing.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Tutoria uses the camera so you can take a photo of your homework question.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

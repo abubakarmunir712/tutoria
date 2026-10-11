@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# Local debugging environment for Tutoria: everything the app needs, on this machine.
+#
+#   scripts/dev up        start (or reuse) Postgres, the AI service and the server, then point the
+#                         app at this machine's current IP
+#   scripts/dev ip        just refresh the app's server address (run it when your IP changes)
+#   scripts/dev status    what is running, and the address the app will use
+#   scripts/dev logs [server|ai|db]   follow a log
+#   scripts/dev restart server|ai     restart one piece (after changing its code)
+#   scripts/dev down      stop what `up` started
+#
+# What it starts (state lives in .dev/, which is git-ignored):
+#   Postgres   a private cluster on port 54329 (no password, localhost only), migrated + seeded
+#   AI service FastAPI on 127.0.0.1:8000 (uses Qdrant + Gemini from the repo-root .env)
+#   Server     NestJS on 0.0.0.0:3001, so a phone on the same Wi-Fi can reach it
+# Port 3001 (not 3000) so it can sit beside other projects' dev servers.
+#
+# Then run the app with the "Tutoria (local server)" launch configuration in VS Code, or
+#   cd app && flutter run --dart-define-from-file=dart_defines.local.json
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEV="$ROOT/.dev"
+PG_PORT=54329
+AI_PORT=8000
+SERVER_PORT=3001
+DB_URL="postgresql://tutoria@localhost:$PG_PORT/tutoria_dev"
+DEFINES="$ROOT/app/dart_defines.local.json"
+
+say() { printf '\033[1m%s\033[0m\n' "$*"; }
+note() { printf '   %s\n' "$*"; }
+die() { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
+
+# This machine's address on the network the phone is on (override with DEV_HOST=...).
+host_ip() {
+  if [ -n "${DEV_HOST:-}" ]; then echo "$DEV_HOST"; return; fi
+  ip route get 1.1.1.1 2>/dev/null | grep -o 'src [0-9.]*' | cut -d' ' -f2 | head -1
+}
+
+alive() { [ -f "$1" ] && kill -0 "$(cat "$1")" 2>/dev/null; }
+
+wait_for() { # url, seconds, label
+  local i
+  for ((i = 0; i < $2; i++)); do
+    curl -sf -m 2 -o /dev/null "$1" && return 0
+    sleep 1
+  done
+  die "$3 did not come up in $2s — see: scripts/dev logs"
+}
+
+port_in_use_by_other() { # port, pidfile
+  ss -ltn 2>/dev/null | grep -q ":$1 " && ! alive "$2"
+}
+
+write_defines() {
+  local ip; ip="$(host_ip)"
+  [ -n "$ip" ] || die "Could not work out this machine's IP. Set it: DEV_HOST=192.168.x.x scripts/dev up"
+  printf '{\n  "API_BASE_URL": "http://%s:%s"\n}\n' "$ip" "$SERVER_PORT" > "$DEFINES"
+  say "App server address: http://$ip:$SERVER_PORT"
+  note "written to app/dart_defines.local.json"
+}
+
+start_db() {
+  mkdir -p "$DEV/pgsock"
+  if [ ! -d "$DEV/pg" ]; then
+    say "Creating the private Postgres cluster (first run only)"
+    initdb -D "$DEV/pg" -U tutoria --auth=trust -E UTF8 > "$DEV/initdb.log" 2>&1 || die "initdb failed: $DEV/initdb.log"
+  fi
+  if pg_ctl -D "$DEV/pg" status > /dev/null 2>&1; then
+    note "Postgres already running"
+  else
+    port_in_use_by_other "$PG_PORT" /dev/null && die "Port $PG_PORT is taken by something else."
+    say "Starting Postgres on :$PG_PORT"
+    pg_ctl -D "$DEV/pg" -o "-p $PG_PORT -k $DEV/pgsock -c listen_addresses=localhost" -l "$DEV/pg.log" -w start > /dev/null
+  fi
+  psql "postgresql://tutoria@localhost:$PG_PORT/postgres" -Atc "select 1 from pg_database where datname='tutoria_dev'" | grep -q 1 \
+    || psql "postgresql://tutoria@localhost:$PG_PORT/postgres" -qc "create database tutoria_dev"
+}
+
+migrate_and_seed() {
+  say "Applying migrations and seeding subjects"
+  (
+    cd "$ROOT/server"
+    [ -d node_modules ] || { note "installing server dependencies (first run)"; npm ci --ignore-scripts --no-audit --no-fund > "$DEV/npm.log" 2>&1; }
+    export DATABASE_URL="$DB_URL"
+    npx prisma generate > "$DEV/prisma.log" 2>&1
+    npx prisma migrate deploy >> "$DEV/prisma.log" 2>&1 || { tail -5 "$DEV/prisma.log"; exit 1; }
+    npx ts-node prisma/seed.ts >> "$DEV/prisma.log" 2>&1
+  ) || die "Migration failed — see .dev/prisma.log"
+}
+
+start_ai() {
+  if alive "$DEV/ai.pid" && curl -sf -m 2 -o /dev/null "http://127.0.0.1:$AI_PORT/health"; then note "AI service already running"; return; fi
+  port_in_use_by_other "$AI_PORT" "$DEV/ai.pid" && die "Port $AI_PORT is taken by something else (stop it, or it is an older AI service: kill it and rerun)."
+  [ -x "$ROOT/pipeline/.venv/bin/uvicorn" ] || die "pipeline/.venv is missing. Create it: cd pipeline && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
+  say "Starting the AI service on 127.0.0.1:$AI_PORT (the first start downloads a small embedding model)"
+  mkdir -p "$DEV/fastembed"
+  # Load (and on the first run download) the embedding model now: otherwise the first chat message
+  # waits on a ~90 MB download and the app looks hung.
+  ( cd "$ROOT/pipeline/src" && FASTEMBED_CACHE_DIR="$DEV/fastembed" ../.venv/bin/python -c \
+      "from retrieval import get_embedder; list(get_embedder().embed(['warm up']))" > "$DEV/warm.log" 2>&1 ) \
+    || die "Could not load the embedding model — see .dev/warm.log"
+  (
+    cd "$ROOT/pipeline"
+    FASTEMBED_CACHE_DIR="$DEV/fastembed" setsid nohup .venv/bin/uvicorn service:app --app-dir src --host 127.0.0.1 --port "$AI_PORT" > "$DEV/ai.log" 2>&1 < /dev/null &
+    echo $! > "$DEV/ai.pid"
+  )
+  wait_for "http://127.0.0.1:$AI_PORT/health" 240 "The AI service"
+}
+
+start_server() {
+  if alive "$DEV/server.pid" && curl -sf -m 2 -o /dev/null "http://127.0.0.1:$SERVER_PORT/"; then note "Server already running"; return; fi
+  port_in_use_by_other "$SERVER_PORT" "$DEV/server.pid" && die "Port $SERVER_PORT is taken by something else."
+  say "Building and starting the server on 0.0.0.0:$SERVER_PORT"
+  (cd "$ROOT/server" && npm run build > "$DEV/build.log" 2>&1) || { tail -20 "$DEV/build.log"; die "Server build failed"; }
+  (
+    cd "$ROOT/server"
+    # JWT secrets etc. come from the repo-root .env; the database, port and AI address are this setup's.
+    if [ -f "$ROOT/.env" ]; then set -a; . "$ROOT/.env"; set +a; fi
+    export DATABASE_URL="$DB_URL" PORT="$SERVER_PORT" AI_SERVICE_URL="http://127.0.0.1:$AI_PORT"
+    : "${JWT_SECRET:=dev-only-secret-change-me}"; export JWT_SECRET
+    setsid nohup node dist/src/main > "$DEV/server.log" 2>&1 < /dev/null &
+    echo $! > "$DEV/server.pid"
+  )
+  wait_for "http://127.0.0.1:$SERVER_PORT/" 60 "The server"
+}
+
+stop_pid() { # pidfile, label
+  if alive "$1"; then kill "$(cat "$1")" 2>/dev/null && note "stopped $2"; fi
+  rm -f "$1"
+}
+
+status() {
+  local ip; ip="$(host_ip)"
+  for item in "Postgres:$PG_PORT" "AI service:$AI_PORT" "Server:$SERVER_PORT"; do
+    local name="${item%%:*}" port="${item##*:}"
+    if ss -ltn 2>/dev/null | grep -q ":$port "; then printf '  %-11s up   (port %s)\n' "$name" "$port"; else printf '  %-11s down (port %s)\n' "$name" "$port"; fi
+  done
+  if ss -ltn 2>/dev/null | grep -q "0.0.0.0:$SERVER_PORT\|\*:$SERVER_PORT"; then
+    echo "  Server listens on all interfaces: a phone on this network can reach http://$ip:$SERVER_PORT"
+  elif ss -ltn 2>/dev/null | grep -q ":$SERVER_PORT "; then
+    echo "  WARNING: the server is only listening on localhost"
+  fi
+  [ -f "$DEFINES" ] && echo "  App is pointed at: $(grep -o 'http[^"]*' "$DEFINES")" || echo "  App address not written yet (scripts/dev up)"
+}
+
+case "${1:-}" in
+  up)
+    mkdir -p "$DEV"
+    start_db
+    migrate_and_seed
+    start_ai
+    start_server
+    write_defines
+    echo
+    say "Ready. Run the app with the \"Tutoria (local server)\" launch configuration (F5 in VS Code)."
+    note "A phone must be on the same Wi-Fi as this machine. If it can't connect, see: scripts/dev status"
+    ;;
+  ip) write_defines ;;
+  status) status ;;
+  logs)
+    case "${2:-server}" in
+      server) tail -f "$DEV/server.log" ;;
+      ai) tail -f "$DEV/ai.log" ;;
+      db) tail -f "$DEV/pg.log" ;;
+      *) die "logs server|ai|db" ;;
+    esac ;;
+  restart)
+    case "${2:-}" in
+      server) stop_pid "$DEV/server.pid" server; start_server ;;
+      ai) stop_pid "$DEV/ai.pid" "AI service"; start_ai ;;
+      *) die "restart server|ai" ;;
+    esac ;;
+  down)
+    stop_pid "$DEV/server.pid" server
+    stop_pid "$DEV/ai.pid" "AI service"
+    pg_ctl -D "$DEV/pg" status > /dev/null 2>&1 && pg_ctl -D "$DEV/pg" stop -m fast > /dev/null && note "stopped Postgres"
+    ;;
+  *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

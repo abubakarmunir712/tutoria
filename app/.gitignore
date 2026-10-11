@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# written by scripts/dev: this machine's IP for the dev server
+dart_defines.local.json
