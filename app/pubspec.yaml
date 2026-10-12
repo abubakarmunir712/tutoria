@@ -40,6 +40,8 @@ dependencies:
   provider: ^6.1.2
   image_picker: ^1.1.2
   flutter_markdown_plus: ^1.0.12
+  record: ^7.1.2
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:

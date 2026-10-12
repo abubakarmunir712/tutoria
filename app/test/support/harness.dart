@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:tutoria/core/api_client.dart';
 import 'package:tutoria/core/design/design.dart';
 import 'package:tutoria/core/models.dart';
+import 'package:tutoria/core/voice.dart';
 import 'package:tutoria/features/auth/auth_state.dart';
 
 /// Loads the real fonts so screens render as they do on a phone (tests default to a block font).
@@ -130,6 +131,19 @@ class FakeApi extends ApiClient {
   List<Subject> subjects;
   final asked = <String>[];
 
+  /// What the fake recogniser "heard" for a spoken question, and how many replies were read out.
+  String heard = 'How do I add fractions?';
+  var spoken = 0;
+
+  @override
+  Future<String> transcribeAudio(File audio) async => heard;
+
+  @override
+  Future<Uint8List> speak(String text) async {
+    spoken++;
+    return Uint8List.fromList([1, 2, 3]);
+  }
+
   @override
   Future<Me> getMe() async => me;
 
@@ -166,12 +180,42 @@ class FakeApi extends ApiClient {
   }
 }
 
+/// A microphone and speaker that need no device.
+class FakeVoice implements VoiceService {
+  FakeVoice({this.micAllowed = true});
+
+  final bool micAllowed;
+  var recordings = 0;
+  var played = 0;
+  var stopped = 0;
+
+  @override
+  Future<bool> startRecording() async {
+    if (micAllowed) recordings++;
+    return micAllowed;
+  }
+
+  @override
+  Future<File?> stopRecording() async => File('/tmp/fake-question.m4a');
+
+  @override
+  Future<void> play(Uint8List audio, {String mimeType = 'audio/wav'}) async =>
+      played++;
+
+  @override
+  Future<void> stopPlayback() async => stopped++;
+
+  @override
+  void dispose() {}
+}
+
 /// A phone-sized, themed app around [home], with the API and auth state the screens expect.
 Future<void> pumpApp(
   WidgetTester tester,
   Widget home, {
   FakeApi? api,
   Me? me,
+  FakeVoice? voice,
   AuthStatus status = AuthStatus.authenticated,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532); // 390 x 844 logical at 3x
@@ -186,6 +230,7 @@ Future<void> pumpApp(
     MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: fake),
+        Provider<VoiceService>.value(value: voice ?? FakeVoice()),
         ChangeNotifierProvider<AuthState>.value(value: auth),
       ],
       child: MaterialApp(

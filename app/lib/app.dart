@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/api_client.dart';
 import 'core/design/design.dart';
+import 'core/voice.dart';
 import 'features/auth/auth_state.dart';
 import 'features/home/main_shell.dart';
 import 'features/onboarding/learner_details_screen.dart';
@@ -10,16 +11,23 @@ import 'features/onboarding/subjects_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 
 class TutoriaApp extends StatelessWidget {
-  const TutoriaApp({super.key, this.api});
+  const TutoriaApp({super.key, this.api, this.voice});
 
   /// Lets tests supply a fake API; the real app builds its own.
   final ApiClient? api;
+
+  /// Likewise for the microphone and speaker.
+  final VoiceService? voice;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         Provider<ApiClient>(create: (_) => api ?? ApiClient()),
+        Provider<VoiceService>(
+          create: (_) => voice ?? DeviceVoiceService(),
+          dispose: (_, v) => v.dispose(),
+        ),
         ChangeNotifierProvider<AuthState>(
           create: (context) =>
               AuthState(api: context.read<ApiClient>())..bootstrap(),

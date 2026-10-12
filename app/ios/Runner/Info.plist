@@ -33,6 +33,8 @@
 	<string>Tutoria connects to the development server on your local network while testing.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Tutoria uses the camera so you can take a photo of your homework question.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Tutoria uses the microphone so you can ask your tutor a question out loud.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tutoria needs access to your photos so you can choose a picture of your homework question.</string>
 	<key>CFBundleVersion</key>

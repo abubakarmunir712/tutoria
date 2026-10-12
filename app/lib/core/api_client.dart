@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -292,5 +293,32 @@ class ApiClient {
       return http.Response.fromStream(await _client.send(request));
     });
     return ChatResponse.fromJson(await _decode(res));
+  }
+
+  /// A spoken question as text. The caller shows it and sends it like a typed message.
+  Future<String> transcribeAudio(File audio) async {
+    final res = await _authed((token) async {
+      final request = http.MultipartRequest('POST', _uri('/chat/transcribe'))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..files.add(await http.MultipartFile.fromPath('audio', audio.path));
+      return http.Response.fromStream(await _client.send(request));
+    });
+    final body = await _decode(res);
+    return (body['text'] as String? ?? '').trim();
+  }
+
+  /// A tutor reply as spoken audio (WAV).
+  Future<Uint8List> speak(String text) async {
+    final res = await _authed(
+      (token) => _client.post(
+        _uri('/chat/speak'),
+        headers: _json(token),
+        body: jsonEncode({'text': text}),
+      ),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(res.statusCode, 'Could not read the answer aloud.');
+    }
+    return res.bodyBytes;
   }
 }

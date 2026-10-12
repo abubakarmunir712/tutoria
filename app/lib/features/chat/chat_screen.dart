@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../../core/api_client.dart';
 import '../../core/api_config.dart';
 import '../../core/design/design.dart';
 import '../../core/grade_labels.dart';
+import '../../core/voice.dart';
 
 class _ChatMessage {
   _ChatMessage.user(this.text)
@@ -55,6 +57,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scroll = ScrollController();
   final _messages = <_ChatMessage>[];
   bool _sending = false;
+  bool _recording = false;
+  bool _transcribing = false;
+
+  /// The tutor message being read aloud (or fetched to be), if any.
+  int? _speakingIndex;
+  bool _loadingSpeech = false;
 
   @override
   void initState() {
@@ -71,12 +79,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    if (_recording || _speakingIndex != null) {
+      unawaited(_voice.stopPlayback());
+    }
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   ApiClient get _api => context.read<ApiClient>();
+  VoiceService get _voice => context.read<VoiceService>();
 
   /// Prior turns in this conversation, oldest first — captured before the new
   /// message is appended, and capped so the request body doesn't grow unbounded
@@ -114,7 +126,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToEnd();
   }
 
-  Future<void> _sendText([String? preset]) async {
+  /// [spoken] marks a question the child said aloud: the tutor then answers aloud too.
+  Future<void> _sendText([String? preset, bool spoken = false]) async {
     final question = (preset ?? _controller.text).trim();
     if (question.isEmpty || _sending) return;
     if (preset == null) _controller.clear();
@@ -132,6 +145,9 @@ class _ChatScreenState extends State<ChatScreen> {
         history: history,
       );
       _addAiMessage(response.answer, response.citations);
+      if (spoken) {
+        unawaited(_speak(_messages.length - 1));
+      }
     } on ApiException catch (e) {
       _addAiMessage('Error: ${e.message}');
     } catch (_) {
@@ -140,6 +156,105 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  /// Tap once to start talking, again to stop. The words are shown as the child's message and
+  /// answered like any typed question.
+  Future<void> _toggleMic() async {
+    if (_sending || _transcribing || _loadingSpeech) return;
+    if (!_recording) {
+      await _stopSpeaking();
+      try {
+        final started = await _voice.startRecording();
+        if (!mounted) return;
+        if (!started) {
+          _addAiMessage(
+            "I can't hear you yet. Allow microphone access for Tutoria in your phone's "
+            'Settings, or type your question instead.',
+          );
+          return;
+        }
+        setState(() => _recording = true);
+      } catch (_) {
+        _addAiMessage(
+          "I couldn't start the microphone. Please type your question instead.",
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _recording = false;
+      _transcribing = true;
+    });
+    String text = '';
+    try {
+      final file = await _voice.stopRecording();
+      if (file != null) text = await _api.transcribeAudio(file);
+    } on ApiException catch (e) {
+      _addAiMessage('Error: ${e.message}');
+    } catch (_) {
+      _addAiMessage(
+        "I couldn't send your voice. Check your internet connection and try again.",
+      );
+    } finally {
+      if (mounted) setState(() => _transcribing = false);
+    }
+    if (!mounted) return;
+    if (text.isEmpty) {
+      if (_messages.isEmpty || _messages.last.isUser) {
+        _addAiMessage(
+          "I couldn't hear a question. Tap the microphone and try again, a little closer to your phone.",
+        );
+      }
+      return;
+    }
+    await _sendText(text, true);
+  }
+
+  Future<void> _stopSpeaking() async {
+    if (_speakingIndex == null && !_loadingSpeech) return;
+    setState(() {
+      _speakingIndex = null;
+      _loadingSpeech = false;
+    });
+    await _voice.stopPlayback();
+  }
+
+  /// Reads one tutor message aloud; tapping it again while it plays stops it.
+  Future<void> _speak(int index) async {
+    if (_speakingIndex == index) {
+      await _stopSpeaking();
+      return;
+    }
+    await _stopSpeaking();
+    final text = _messages[index].text;
+    if (text == null || !mounted) return;
+    setState(() {
+      _speakingIndex = index;
+      _loadingSpeech = true;
+    });
+    try {
+      final audio = await _api.speak(text);
+      if (!mounted || _speakingIndex != index) return;
+      setState(() => _loadingSpeech = false);
+      await _voice.play(audio);
+    } catch (_) {
+      if (mounted && _speakingIndex == index) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("I couldn't read that aloud. Try again."),
+          ),
+        );
+      }
+    } finally {
+      if (mounted && _speakingIndex == index) {
+        setState(() {
+          _speakingIndex = null;
+          _loadingSpeech = false;
+        });
+      }
     }
   }
 
@@ -286,14 +401,23 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: _messages.length + (_sending ? 1 : 0),
                     itemBuilder: (context, i) => i == _messages.length
                         ? const _TypingBubble()
-                        : _MessageBubble(message: _messages[i]),
+                        : _MessageBubble(
+                            message: _messages[i],
+                            speaking: _speakingIndex == i,
+                            loadingSpeech:
+                                _speakingIndex == i && _loadingSpeech,
+                            onListen: () => _speak(i),
+                          ),
                   ),
           ),
           _Composer(
             controller: _controller,
             sending: _sending,
+            recording: _recording,
+            transcribing: _transcribing,
             onSend: _sendText,
             onPhoto: _choosePhotoSource,
+            onMic: _toggleMic,
           ),
         ],
       ),
@@ -360,14 +484,20 @@ class _Composer extends StatelessWidget {
   const _Composer({
     required this.controller,
     required this.sending,
+    required this.recording,
+    required this.transcribing,
     required this.onSend,
     required this.onPhoto,
+    required this.onMic,
   });
 
   final TextEditingController controller;
   final bool sending;
+  final bool recording;
+  final bool transcribing;
   final VoidCallback onSend;
   final VoidCallback onPhoto;
+  final VoidCallback onMic;
 
   @override
   Widget build(BuildContext context) {
@@ -399,48 +529,62 @@ class _Composer extends StatelessWidget {
                   foregroundColor: TColors.blue600,
                 ),
                 tooltip: 'Add a homework photo',
-                onPressed: sending ? null : onPhoto,
+                onPressed: sending || recording || transcribing
+                    ? null
+                    : onPhoto,
                 icon: const Icon(Icons.photo_camera_rounded),
               ),
               const SizedBox(width: TSpace.sm),
               Expanded(
-                child: TextField(
-                  controller: controller,
-                  enabled: !sending,
-                  minLines: 1,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => onSend(),
-                  style: TText.body.copyWith(
-                    color: TColors.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Type your question…',
-                    filled: true,
-                    fillColor: TColors.blue50,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TRadius.pill),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TRadius.pill),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TRadius.pill),
-                      borderSide: const BorderSide(
-                        color: TColors.blue600,
-                        width: 2,
+                child: recording || transcribing
+                    ? _VoiceStatus(recording: recording)
+                    : TextField(
+                        controller: controller,
+                        enabled: !sending,
+                        minLines: 1,
+                        maxLines: 4,
+                        textCapitalization: TextCapitalization.sentences,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => onSend(),
+                        style: TText.body.copyWith(
+                          color: TColors.ink,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Type your question…',
+                          filled: true,
+                          fillColor: TColors.blue50,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(TRadius.pill),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(TRadius.pill),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(TRadius.pill),
+                            borderSide: const BorderSide(
+                              color: TColors.blue600,
+                              width: 2,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+              ),
+              const SizedBox(width: TSpace.sm),
+              IconButton.filled(
+                style: IconButton.styleFrom(
+                  backgroundColor: recording ? TColors.danger : TColors.blue100,
+                  foregroundColor: recording ? Colors.white : TColors.blue600,
                 ),
+                tooltip: recording ? 'Stop and send' : 'Ask with your voice',
+                onPressed: sending || transcribing ? null : onMic,
+                icon: Icon(recording ? Icons.stop_rounded : Icons.mic_rounded),
               ),
               const SizedBox(width: TSpace.sm),
               IconButton.filled(
@@ -449,12 +593,57 @@ class _Composer extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
                 tooltip: 'Send',
-                onPressed: sending ? null : onSend,
+                onPressed: sending || recording || transcribing ? null : onSend,
                 icon: const Icon(Icons.send_rounded),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Shown in place of the text field while the child is speaking or the words are being read.
+class _VoiceStatus extends StatelessWidget {
+  const _VoiceStatus({required this.recording});
+
+  final bool recording;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: TColors.blue50,
+        borderRadius: BorderRadius.circular(TRadius.pill),
+      ),
+      child: Row(
+        children: [
+          if (recording)
+            const Icon(Icons.graphic_eq_rounded, color: TColors.danger)
+          else
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+          const SizedBox(width: TSpace.sm),
+          Expanded(
+            child: Text(
+              recording
+                  ? 'Listening… tap the red button when done'
+                  : 'Got it, writing it down…',
+              style: TText.body.copyWith(
+                color: TColors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -546,9 +735,17 @@ class _TutorAvatar extends StatelessWidget {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    this.speaking = false,
+    this.loadingSpeech = false,
+    this.onListen,
+  });
 
   final _ChatMessage message;
+  final bool speaking;
+  final bool loadingSpeech;
+  final VoidCallback? onListen;
 
   @override
   Widget build(BuildContext context) {
@@ -624,6 +821,35 @@ class _MessageBubble extends StatelessWidget {
                     Flexible(child: bubble),
                   ],
                 ),
+          if (!user && onListen != null && (message.text ?? '').isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 38),
+              child: TextButton.icon(
+                onPressed: onListen,
+                style: TextButton.styleFrom(
+                  foregroundColor: TColors.blue600,
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: loadingSpeech
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        speaking
+                            ? Icons.stop_circle_rounded
+                            : Icons.volume_up_rounded,
+                        size: 20,
+                      ),
+                label: Text(
+                  loadingSpeech
+                      ? 'Getting ready…'
+                      : (speaking ? 'Stop' : 'Listen'),
+                  style: TText.caption.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
           if (message.citations.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 44),
