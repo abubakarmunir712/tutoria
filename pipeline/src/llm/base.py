@@ -55,3 +55,15 @@ class LlmProvider(ABC):
         question — the vision model only reads the image, it doesn't answer from it,
         so homework photos stay grounded in the curriculum like everything else."""
         raise NotImplementedError
+
+    @abstractmethod
+    def transcribe_audio(self, audio_bytes: bytes, mime_type: str) -> str:
+        """Speech-to-text for a student's spoken question (English). Returns just the words
+        spoken, or "" if there is no intelligible speech. The text then goes through the same
+        grounded `answer()` path as a typed question."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def synthesize_speech(self, text: str) -> tuple[bytes, str]:
+        """Text-to-speech for a tutor reply (English). Returns (audio bytes, mime type)."""
+        raise NotImplementedError

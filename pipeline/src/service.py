@@ -5,18 +5,21 @@ Run: uvicorn service:app --reload --port 8000  (from pipeline/src/)
 """
 
 import json
+import logging
 import re
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from llm import get_llm_provider  # noqa: E402
+from speech import speakable_text  # noqa: E402
 from topics import topics_for  # noqa: E402
 from retrieval import (  # noqa: E402
     WEAK_MATCH_SCORE,
@@ -28,6 +31,7 @@ from retrieval import (  # noqa: E402
 )
 
 app = FastAPI(title="Tutoria AI Service")
+log = logging.getLogger("uvicorn.error")
 
 IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "structured" / "images"
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
@@ -247,3 +251,38 @@ async def ask_image(
     )
     result.answer = f"{quote_photo_text(transcription)}\n\n{result.answer}"
     return result
+
+
+MAX_AUDIO_BYTES = 10 * 1024 * 1024
+
+
+class SpeakRequest(BaseModel):
+    text: str
+
+
+@app.post("/transcribe-audio")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """A student's spoken question -> text. The app shows the text and sends it through /ask,
+    so a voice question is grounded exactly like a typed one."""
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        raise HTTPException(400, "Empty audio upload")
+    if len(audio_bytes) > MAX_AUDIO_BYTES:
+        raise HTTPException(413, "Audio is too large (max 10 MB)")
+    content_type = audio.content_type if (audio.content_type or "").startswith("audio/") else "audio/mp4"
+    started = time.perf_counter()
+    text = get_llm_provider().transcribe_audio(audio_bytes, content_type)
+    log.info("stt bytes=%d seconds=%.2f chars=%d", len(audio_bytes), time.perf_counter() - started, len(text))
+    return {"text": text}
+
+
+@app.post("/speak")
+def speak(req: SpeakRequest):
+    """A tutor reply -> spoken audio (what the child hears), with citation codes and markdown removed."""
+    spoken = speakable_text(req.text)
+    if not spoken:
+        raise HTTPException(400, "Nothing to say")
+    started = time.perf_counter()
+    audio, mime = get_llm_provider().synthesize_speech(spoken)
+    log.info("tts chars=%d seconds=%.2f bytes=%d", len(spoken), time.perf_counter() - started, len(audio))
+    return Response(content=audio, media_type=mime)

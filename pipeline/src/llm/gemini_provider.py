@@ -107,6 +107,14 @@ ball", the topic is nouns, not football). Use "" if the text is {UNREADABLE}.
 false if you had to guess or skip anything (blurry, smudged, cut off, ambiguous handwriting)."""
 
 
+TRANSCRIBE_AUDIO_PROMPT = (
+    "This is a school child in Ghana asking a question to a tutor, in English (possibly with a "
+    "Ghanaian accent). Transcribe exactly what was said, as plain text, with normal punctuation. "
+    "Write numbers and maths the way a student would type them (e.g. 3/4, 2 + 5). Do not answer "
+    "the question and do not add anything. If there is no intelligible speech, output nothing."
+)
+
+
 class _TranscriptionSchema(BaseModel):
     text: str
     topic: str
@@ -117,6 +125,8 @@ class GeminiProvider(LlmProvider):
     def __init__(self, model: str | None = None):
         self._client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
         self._model = model or os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        self._tts_model = os.environ.get("GEMINI_TTS_MODEL", "gemini-3.8-flash-lite-tts")
+        self._voice = os.environ.get("GEMINI_TTS_VOICE", "Kore")
 
     def answer(
         self,
@@ -168,3 +178,27 @@ class GeminiProvider(LlmProvider):
         except (ValueError, TypeError, AttributeError):
             # Model ignored the JSON format: treat whatever it said as the transcription.
             return Transcription(text=(response.text or "").strip(), confident=False)
+
+    def transcribe_audio(self, audio_bytes: bytes, mime_type: str) -> str:
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=[types.Part.from_bytes(data=audio_bytes, mime_type=mime_type), TRANSCRIBE_AUDIO_PROMPT],
+            config=types.GenerateContentConfig(temperature=0),
+        )
+        return (response.text or "").strip()
+
+    def synthesize_speech(self, text: str) -> tuple[bytes, str]:
+        response = self._client.models.generate_content(
+            model=self._tts_model,
+            contents=f"Say this warmly and clearly, like a kind teacher talking to a child: {text}",
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=self._voice)
+                    )
+                ),
+            ),
+        )
+        part = response.candidates[0].content.parts[0].inline_data
+        return part.data, part.mime_type or "audio/wav"

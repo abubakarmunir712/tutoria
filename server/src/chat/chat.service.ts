@@ -58,6 +58,34 @@ export class ChatService {
     return this.handle(res);
   }
 
+  async transcribe(file: Express.Multer.File): Promise<{ text: string }> {
+    const form = new FormData();
+    form.append(
+      'audio',
+      new Blob([new Uint8Array(file.buffer)], { type: file.mimetype }),
+      file.originalname,
+    );
+    const res = await fetch(`${this.baseUrl}/transcribe-audio`, {
+      method: 'POST',
+      body: form,
+    });
+    if (!res.ok) await this.fail(res);
+    return res.json() as Promise<{ text: string }>;
+  }
+
+  async speak(text: string): Promise<{ audio: Buffer; mimeType: string }> {
+    const res = await fetch(`${this.baseUrl}/speak`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) await this.fail(res);
+    return {
+      audio: Buffer.from(await res.arrayBuffer()),
+      mimeType: res.headers.get('content-type') ?? 'audio/wav',
+    };
+  }
+
   /** Strands and topics for a grade and subject, or null if the curriculum has none. */
   async topics(grade: string, subject: string): Promise<TopicsResponse | null> {
     const params = new URLSearchParams({ grade, subject });
@@ -72,11 +100,13 @@ export class ChatService {
   }
 
   private async handle(res: Response): Promise<AskResponse> {
-    if (!res.ok) {
-      throw new InternalServerErrorException(
-        `AI service error (${res.status}): ${await res.text()}`,
-      );
-    }
+    if (!res.ok) await this.fail(res);
     return res.json() as Promise<AskResponse>;
+  }
+
+  private async fail(res: Response): Promise<never> {
+    throw new InternalServerErrorException(
+      `AI service error (${res.status}): ${await res.text()}`,
+    );
   }
 }
