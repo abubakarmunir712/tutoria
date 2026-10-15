@@ -123,7 +123,7 @@ void main() {
 
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('I’m a Parent'));
+    await tester.tap(find.text('I’m a Parent / Guardian'));
     await tester.pumpAndSettle();
 
     // Step 1: empty form is refused with messages, nothing is sent.
