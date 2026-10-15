@@ -24,6 +24,7 @@ class TButton extends StatelessWidget {
     required this.onPressed,
     this.style = TButtonStyle.primary,
     this.icon,
+    this.iconAfter = false,
     this.loading = false,
     this.expanded = true,
   });
@@ -32,6 +33,9 @@ class TButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final TButtonStyle style;
   final IconData? icon;
+
+  /// Puts the icon after the label (an arrow on a "Continue" button) instead of before it.
+  final bool iconAfter;
   final bool loading;
   final bool expanded;
 
@@ -60,7 +64,7 @@ class TButton extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2.5, color: fg),
           )
         else ...[
-          if (icon != null) ...[
+          if (icon != null && !iconAfter) ...[
             Icon(icon, size: 20, color: fg),
             const SizedBox(width: 8),
           ],
@@ -71,6 +75,10 @@ class TButton extends StatelessWidget {
               style: TText.button.copyWith(color: fg),
             ),
           ),
+          if (icon != null && iconAfter) ...[
+            const SizedBox(width: 8),
+            Icon(icon, size: 22, color: fg),
+          ],
         ],
       ],
     );

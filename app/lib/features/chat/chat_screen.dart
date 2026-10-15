@@ -7,6 +7,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/activity.dart';
 import '../../core/api_client.dart';
 import '../../core/api_config.dart';
 import '../../core/design/design.dart';
@@ -41,12 +42,23 @@ class ChatScreen extends StatefulWidget {
     required this.subject,
     this.initialQuestion,
     this.startWithCamera = false,
+    this.startWithVoice = false,
+    this.learnerId,
+    this.topic,
   });
 
   final String? grade;
   final String subject;
   final String? initialQuestion;
   final bool startWithCamera;
+
+  /// Starts listening straight away ("Voice Tutor" on the home screen).
+  final bool startWithVoice;
+
+  /// Whose chat this is and, if it was opened from the topic list, which topic; used to
+  /// remember where the learner left off.
+  final String? learnerId;
+  final String? topic;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -67,28 +79,45 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _voice = context.read<VoiceService>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.initialQuestion != null) {
         _sendText(widget.initialQuestion);
       } else if (widget.startWithCamera) {
         _sendImage(ImageSource.camera);
+      } else if (widget.startWithVoice) {
+        _toggleMic();
       }
     });
   }
 
   @override
   void dispose() {
-    if (_recording || _speakingIndex != null) {
-      unawaited(_voice.stopPlayback());
-    }
+    // Leaving the chat must not leave the microphone open or the tutor talking.
+    if (_recording) unawaited(_voice.stopRecording());
+    if (_speakingIndex != null) unawaited(_voice.stopPlayback());
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   ApiClient get _api => context.read<ApiClient>();
-  VoiceService get _voice => context.read<VoiceService>();
+
+  void _recordActivity() {
+    final id = widget.learnerId;
+    if (id == null) return;
+    unawaited(
+      context.read<ActivityTracker>().record(
+        id,
+        subject: widget.subject,
+        topic: widget.topic,
+      ),
+    );
+  }
+
+  /// Kept from initState: dispose() can't look anything up through the context.
+  late final VoiceService _voice;
 
   /// Prior turns in this conversation, oldest first — captured before the new
   /// message is appended, and capped so the request body doesn't grow unbounded
@@ -131,6 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final question = (preset ?? _controller.text).trim();
     if (question.isEmpty || _sending) return;
     if (preset == null) _controller.clear();
+    _recordActivity();
     final history = _buildHistory();
     setState(() {
       _messages.add(_ChatMessage.user(question));
@@ -319,6 +349,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
+    _recordActivity();
     final history = _buildHistory();
     setState(() {
       _messages.add(_ChatMessage.image(file.path));

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/activity.dart';
 import 'core/api_client.dart';
 import 'core/design/design.dart';
 import 'core/voice.dart';
@@ -24,6 +25,9 @@ class TutoriaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<ApiClient>(create: (_) => api ?? ApiClient()),
+        ChangeNotifierProvider<ActivityTracker>(
+          create: (_) => ActivityTracker(),
+        ),
         Provider<VoiceService>(
           create: (_) => voice ?? DeviceVoiceService(),
           dispose: (_, v) => v.dispose(),

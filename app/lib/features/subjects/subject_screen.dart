@@ -70,13 +70,15 @@ class _SubjectScreenState extends State<SubjectScreen> {
     }
   }
 
-  void _openChat({String? question}) {
+  void _openChat({String? question, String? topic}) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           grade: _learner.grade,
           subject: widget.subject.name,
           initialQuestion: question,
+          learnerId: _learner.id,
+          topic: topic,
         ),
       ),
     );
@@ -180,6 +182,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                         return TCard(
                           onTap: () => _openChat(
                             question: 'Teach me about ${topic.name}',
+                            topic: topic.name,
                           ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: TSpace.lg,

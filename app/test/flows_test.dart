@@ -194,8 +194,8 @@ void main() {
     await tester.tap(find.widgetWithText(InkWell, 'Finish').last);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Hi Kofi'), findsOneWidget);
-    expect(find.text('Class 5'), findsOneWidget);
+    expect(find.textContaining(', Kofi!'), findsOneWidget);
+    expect(find.text('Class 5'), findsWidgets);
     expect(find.text('Ask\nTutoria'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
   });

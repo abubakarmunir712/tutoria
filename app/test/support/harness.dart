@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:tutoria/core/activity.dart';
 import 'package:tutoria/core/api_client.dart';
 import 'package:tutoria/core/design/design.dart';
 import 'package:tutoria/core/models.dart';
@@ -188,6 +189,7 @@ class FakeVoice implements VoiceService {
   var recordings = 0;
   var played = 0;
   var stopped = 0;
+  var recordingsStopped = 0;
 
   @override
   Future<bool> startRecording() async {
@@ -196,7 +198,10 @@ class FakeVoice implements VoiceService {
   }
 
   @override
-  Future<File?> stopRecording() async => File('/tmp/fake-question.m4a');
+  Future<File?> stopRecording() async {
+    recordingsStopped++;
+    return File('/tmp/fake-question.m4a');
+  }
 
   @override
   Future<void> play(Uint8List audio, {String mimeType = 'audio/wav'}) async =>
@@ -216,6 +221,7 @@ Future<void> pumpApp(
   FakeApi? api,
   Me? me,
   FakeVoice? voice,
+  ActivityTracker? activity,
   AuthStatus status = AuthStatus.authenticated,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532); // 390 x 844 logical at 3x
@@ -231,6 +237,9 @@ Future<void> pumpApp(
       providers: [
         Provider<ApiClient>.value(value: fake),
         Provider<VoiceService>.value(value: voice ?? FakeVoice()),
+        ChangeNotifierProvider<ActivityTracker>.value(
+          value: activity ?? ActivityTracker(),
+        ),
         ChangeNotifierProvider<AuthState>.value(value: auth),
       ],
       child: MaterialApp(

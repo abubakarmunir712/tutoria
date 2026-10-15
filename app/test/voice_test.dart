@@ -88,4 +88,20 @@ void main() {
     expect(find.textContaining('Allow microphone access'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
   });
+
+  testWidgets('leaving the chat while listening releases the microphone', (
+    t,
+  ) async {
+    final voice = FakeVoice();
+    await open(t, FakeApi(me: studentMe), voice);
+
+    await t.tap(find.byTooltip('Ask with your voice'));
+    await t.pump();
+    expect(voice.recordings, 1);
+
+    // The screen goes away mid-recording (back button, tab change).
+    await t.pumpWidget(const SizedBox());
+    expect(voice.recordingsStopped, 1);
+    expect(t.takeException(), isNull);
+  });
 }
