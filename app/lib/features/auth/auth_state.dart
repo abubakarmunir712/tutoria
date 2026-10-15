@@ -91,7 +91,9 @@ class AuthState extends ChangeNotifier {
     } on ApiException catch (e) {
       error = e.message;
       return false;
-    } catch (_) {
+    } catch (e, stack) {
+      // The screen gets a plain message; the real cause goes to the console for whoever is debugging.
+      debugPrint('Auth request failed: ${e.runtimeType}: $e\n$stack');
       error = 'Something went wrong. Check your connection.';
       return false;
     } finally {
@@ -142,7 +144,9 @@ class AuthState extends ChangeNotifier {
     } on ApiException catch (e) {
       error = e.message;
       return null;
-    } catch (_) {
+    } catch (e, stack) {
+      // The screen gets a plain message; the real cause goes to the console for whoever is debugging.
+      debugPrint('Auth request failed: ${e.runtimeType}: $e\n$stack');
       error = 'Something went wrong. Check your connection.';
       return null;
     } finally {
