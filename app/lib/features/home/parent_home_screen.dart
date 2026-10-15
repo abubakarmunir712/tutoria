@@ -6,78 +6,108 @@ import '../../core/models.dart';
 import '../auth/auth_state.dart';
 import '../onboarding/learner_details_screen.dart';
 import '../onboarding/subjects_screen.dart';
-import 'header.dart';
 import 'student_home_screen.dart';
 
 /// A parent's home: their children, each one tap from their tutor.
 class ParentHomeScreen extends StatelessWidget {
-  const ParentHomeScreen({super.key});
+  const ParentHomeScreen({super.key, this.now});
+
+  /// The current time; tests pass a fixed one.
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final me = auth.me!;
+    final clock = now ?? DateTime.now();
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: auth.refreshMe,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            WaveHeader(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Greeting(
-                          text: 'Hello, ${me.firstName}',
-                          style: TText.title.copyWith(color: Colors.white),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          me.learners.length == 1
-                              ? 'Your child is ready to learn.'
-                              : 'Choose a child to start learning.',
-                          style: TText.body.copyWith(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: TColors.pageGradient),
+        child: RefreshIndicator(
+          onRefresh: auth.refreshMe,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    TSpace.page,
+                    TSpace.lg,
+                    TSpace.page,
+                    TSpace.lg,
                   ),
-                  const Mascot(size: 78),
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Wordmark(size: 30),
+                          const Spacer(),
+                          Avatar(name: me.fullName, size: 44),
+                        ],
+                      ),
+                      const SizedBox(height: TSpace.xl),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${greetingFor(clock)}, ${me.firstName}!',
+                              style: TText.title.copyWith(fontSize: 26),
+                            ),
+                          ),
+                          const SizedBox(width: TSpace.sm),
+                          Icon(
+                            clock.hour < 17
+                                ? Icons.wb_sunny_rounded
+                                : Icons.nights_stay_rounded,
+                            color: const Color(0xFFFFB800),
+                            size: 28,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        me.learners.length == 1
+                            ? 'Your child is ready to learn.'
+                            : 'Choose a child to start learning.',
+                        style: TText.body.copyWith(
+                          color: TColors.muted,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                TSpace.page,
-                TSpace.sm,
-                TSpace.page,
-                TSpace.xl,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Your children', style: TText.heading),
-                  const SizedBox(height: TSpace.md),
-                  for (final learner in me.learners) ...[
-                    _ChildCard(learner: learner),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  TSpace.page,
+                  TSpace.sm,
+                  TSpace.page,
+                  TSpace.xl,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Your children', style: TText.heading),
                     const SizedBox(height: TSpace.md),
-                  ],
-                  _AddChildCard(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const LearnerDetailsScreen(),
+                    for (final learner in me.learners) ...[
+                      _ChildCard(learner: learner),
+                      const SizedBox(height: TSpace.md),
+                    ],
+                    _AddChildCard(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LearnerDetailsScreen(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

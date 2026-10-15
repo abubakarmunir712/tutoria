@@ -113,7 +113,7 @@ void main() {
 
   group('signed in', () {
     testWidgets('parent home', (t) async {
-      await pumpApp(t, const ParentHomeScreen(), me: parentMe);
+      await pumpApp(t, ParentHomeScreen(now: morning), me: parentMe);
       await golden(t, 'parent_home');
     });
     testWidgets('student home', (t) async {

@@ -24,7 +24,7 @@ Sampled from the mockup board; the logo's gold is kept for the star.
 | `yellow` **call to action** | `#FEE517` | the main button on blue screens ("Get Started") |
 | `yellowDeep` / `yellowTint` | `#FFC21A` / `#FEF5D2` | accents, the "I'm a Parent" card |
 | `gold` | `#FEBF00` | the logo star |
-| `ink` | `#182B95` | headings |
+| `ink` | `#08185B` | headings |
 | `body` / `muted` / `faint` | `#2B3A67` / `#6B7AA8` / `#9AA7CC` | text, secondary text, placeholders |
 | `line` | `#DCE8F8` | card and field borders |
 | `success` / `warning` / `danger` | `#1BB464` / `#FC7B0A` / `#E5484D` | feedback |
@@ -35,11 +35,11 @@ behind it). `SubjectStyle.of(name)` returns them, so a subject looks the same ev
 | Subject | Accent | Tint |
 |---|---|---|
 | Mathematics | `#0561E6` | `#DCEBFF` |
-| English Language | `#8439E7` | `#E8DEFE` |
-| Science | `#1BB464` | `#D2F5DD` |
+| English Language | `#FF4B7D` | `#FFE5EF` |
+| Science | `#12B886` | `#D4F7EE` |
 | Our World and Our People | `#0EA5B7` | `#D3F3F6` |
 | Social Studies | `#FC7B0A` | `#FFEAD7` |
-| Computing | `#5B5BE8` | `#E3E4FF` |
+| Computing | `#8B4DE8` | `#EFE1FF` |
 
 ## Type
 
