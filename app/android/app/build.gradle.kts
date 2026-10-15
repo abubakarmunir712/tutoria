@@ -27,6 +27,12 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Release builds only allow HTTPS. A test build that talks to the dev server on a laptop
+        // (plain HTTP) opts in with -PcleartextTraffic=true, or ORG_GRADLE_PROJECT_cleartextTraffic=true
+        // in the environment (scripts/dev apk does this). Never set it for a store build.
+        manifestPlaceholders["usesCleartextTraffic"] =
+            (project.findProperty("cleartextTraffic") ?: "false").toString()
     }
 
     buildTypes {

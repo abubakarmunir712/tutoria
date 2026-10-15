@@ -4,6 +4,8 @@
 #   scripts/dev up        start (or reuse) Postgres, the AI service and the server, then point the
 #                         app at this machine's current IP
 #   scripts/dev ip        just refresh the app's server address (run it when your IP changes)
+#   scripts/dev apk       build a RELEASE Android APK that talks to this machine (plain HTTP is
+#                         switched on for that build only) and copy it to ~/Downloads
 #   scripts/dev status    what is running, and the address the app will use
 #   scripts/dev logs [server|ai|db]   follow a log
 #   scripts/dev restart server|ai     restart one piece (after changing its code)
@@ -158,6 +160,18 @@ case "${1:-}" in
     ;;
   ip) write_defines ;;
   status) status ;;
+  apk)
+    write_defines
+    say "Building a release APK against this machine (this takes a couple of minutes)"
+    # ORG_GRADLE_PROJECT_* is how a Gradle property reaches `flutter build`; see build.gradle.kts.
+    (cd "$ROOT/app" && ORG_GRADLE_PROJECT_cleartextTraffic=true \
+      flutter build apk --release --dart-define-from-file=dart_defines.local.json) \
+      || die "Build failed"
+    out="$HOME/Downloads/Tutoria-$(host_ip).apk"
+    cp "$ROOT/app/build/app/outputs/flutter-apk/app-release.apk" "$out"
+    say "APK: $out"
+    note "Works only while the phone is on the same network and \`scripts/dev up\` is running."
+    ;;
   logs)
     case "${2:-server}" in
       server) tail -f "$DEV/server.log" ;;
