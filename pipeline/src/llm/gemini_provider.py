@@ -190,7 +190,9 @@ class GeminiProvider(LlmProvider):
     def synthesize_speech(self, text: str) -> tuple[bytes, str]:
         response = self._client.models.generate_content(
             model=self._tts_model,
-            contents=f"Say this warmly and clearly, like a kind teacher talking to a child: {text}",
+            # Only the words to speak. A style instruction in the text ("say this warmly...") gets
+            # read aloud by the model, and this model refuses a separate system instruction.
+            contents=text,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
