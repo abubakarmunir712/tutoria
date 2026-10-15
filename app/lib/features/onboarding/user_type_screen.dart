@@ -40,54 +40,25 @@ class UserTypeScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'Let’s get started. Who are you?',
-                style: TText.body.copyWith(
-                  color: TColors.blue600,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TText.body.copyWith(color: TColors.muted, fontSize: 18),
               ),
               const SizedBox(height: TSpace.xl),
               OptionCard(
-                title: 'I’m a Parent',
-                subtitle: 'I want to help my child\nlearn and grow',
+                title: 'I’m a Parent / Guardian',
+                subtitle: 'I want to help my child learn and grow',
                 tint: TColors.yellowTint,
-                leading: const _RoleArt(
-                  icon: Icons.family_restroom_rounded,
-                  color: TColors.yellowDeep,
-                ),
+                leading: const _RoleArt('assets/images/role_parent.png'),
                 onTap: () => _choose(context, UserRole.parent),
               ),
               const SizedBox(height: TSpace.lg),
               OptionCard(
                 title: 'I’m a Student',
-                subtitle: 'I want to learn\nand improve',
+                subtitle: 'I want to learn and improve',
                 tint: TColors.blue100,
-                leading: const _RoleArt(
-                  icon: Icons.backpack_rounded,
-                  color: TColors.blue500,
-                ),
+                leading: const _RoleArt('assets/images/role_student.png'),
                 onTap: () => _choose(context, UserRole.student),
               ),
-              const SizedBox(height: TSpace.xl),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Mascot(size: 110),
-                  const SizedBox(width: TSpace.md),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: Text(
-                        'Better\nlearning.\nBrighter\nfutures.',
-                        style: TText.heading.copyWith(
-                          color: TColors.blue600,
-                          fontStyle: FontStyle.italic,
-                          height: 1.15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              const SizedBox(height: TSpace.xxl),
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).push(
@@ -104,24 +75,19 @@ class UserTypeScreen extends StatelessWidget {
   }
 }
 
-/// A round illustration slot for the role cards (the mockups show portraits; this is the stand-in).
+/// The round portrait on a role card.
 class _RoleArt extends StatelessWidget {
-  const _RoleArt({required this.icon, required this.color});
+  const _RoleArt(this.asset);
 
-  final IconData icon;
-  final Color color;
+  final String asset;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 76,
-      height: 76,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: color, width: 3),
-      ),
-      child: Icon(icon, size: 40, color: color),
+    return Image.asset(
+      asset,
+      width: 92,
+      height: 92,
+      excludeFromSemantics: true,
     );
   }
 }

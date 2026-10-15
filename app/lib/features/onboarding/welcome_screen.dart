@@ -41,14 +41,6 @@ class WelcomeScreen extends StatelessWidget {
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: TSpace.md),
-                Text(
-                  'A personal tutor that explains every lesson, step by step.',
-                  style: TText.body.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 16,
-                  ),
-                ),
                 const Spacer(),
                 const Center(child: _HeroArt()),
                 const Spacer(),
@@ -95,52 +87,17 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// A friendly stand-in for the hero photograph until the artwork is supplied: the mascot on a
-/// glowing disc.
+/// The mascot on its glowing disc, from the approved splash artwork.
 class _HeroArt extends StatelessWidget {
   const _HeroArt();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 250,
-      height: 230,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 210,
-            height: 210,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.12),
-            ),
-          ),
-          Container(
-            width: 150,
-            height: 150,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.14),
-            ),
-          ),
-          const Mascot(size: 190),
-          Positioned(
-            right: 14,
-            top: 8,
-            child: Icon(Icons.star_rounded, color: TColors.yellow, size: 34),
-          ),
-          Positioned(
-            left: 10,
-            bottom: 34,
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              color: TColors.yellow.withValues(alpha: 0.9),
-              size: 24,
-            ),
-          ),
-        ],
-      ),
+    return Image.asset(
+      'assets/images/mascot_hero.png',
+      width: 300,
+      height: 300,
+      semanticLabel: 'Tutoria, your tutor',
     );
   }
 }

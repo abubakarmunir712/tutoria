@@ -240,13 +240,18 @@ Future<void> pumpApp(
       ),
     ),
   );
-  // Decode the logo before settling, so screens that show it aren't captured mid-load.
-  await tester.runAsync(
-    () => precacheImage(
-      const AssetImage('assets/images/logo_mark.png'),
-      tester.element(find.byType(MaterialApp)),
-    ),
-  );
+  // Decode the artwork before settling, so screens that show it aren't captured mid-load.
+  await tester.runAsync(() async {
+    final context = tester.element(find.byType(MaterialApp));
+    for (final asset in const [
+      'logo_mark',
+      'mascot_hero',
+      'role_parent',
+      'role_student',
+    ]) {
+      await precacheImage(AssetImage('assets/images/$asset.png'), context);
+    }
+  });
   // Settle async loads and transitions without waiting on endless animations (typing dots).
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));

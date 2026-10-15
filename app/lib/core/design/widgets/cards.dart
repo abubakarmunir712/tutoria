@@ -73,6 +73,8 @@ class OptionCard extends StatelessWidget {
     final radius = BorderRadius.circular(TRadius.lg);
     return Material(
       color: tint,
+      elevation: 3,
+      shadowColor: const Color(0x228FB6E0),
       shape: RoundedRectangleBorder(borderRadius: radius),
       child: InkWell(
         onTap: onTap,
@@ -93,7 +95,18 @@ class OptionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: TColors.ink),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+                child: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: TColors.ink,
+                ),
+              ),
             ],
           ),
         ),
