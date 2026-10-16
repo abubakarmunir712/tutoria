@@ -1,6 +1,8 @@
 import base64
+import io
 import json
 import os
+import wave
 
 from openai import OpenAI
 
@@ -91,6 +93,14 @@ class OpenAIProvider(LlmProvider):
             voice=self._voice,
             input=text,
             instructions=TTS_INSTRUCTIONS,
-            response_format="wav",
+            # Raw 24 kHz 16-bit mono PCM, wrapped below. OpenAI's own "wav" output carries a
+            # streaming header with the length unset, which Android's player refuses to open.
+            response_format="pcm",
         )
-        return response.content, "audio/wav"
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(24000)
+            wav.writeframes(response.content)
+        return buf.getvalue(), "audio/wav"
