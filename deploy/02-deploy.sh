@@ -24,7 +24,7 @@ cd "$REPO_ROOT"
 
 if [[ ! -f .env ]]; then
   echo "No .env file at repo root. Copy .env.example to .env and fill in real values first:" >&2
-  echo "  DATABASE_URL, JWT_SECRET, QDRANT_API_URL, QDRANT_API_SECRET, GEMINI_API_KEY" >&2
+  echo "  DATABASE_URL, JWT_SECRET, QDRANT_API_URL, QDRANT_API_SECRET, GEMINI_API_KEY (or OPENAI_API_KEY with LLM_PROVIDER=openai)" >&2
   exit 1
 fi
 
@@ -51,6 +51,8 @@ cat > "/etc/nginx/sites-available/$DOMAIN" <<NGINX
 server {
     listen 80;
     server_name $DOMAIN;
+    # Homework photos and voice recordings are uploads; nginx's 1 MB default would reject them.
+    client_max_body_size 12m;
 
     location / {
         proxy_pass http://127.0.0.1:3001;

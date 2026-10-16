@@ -26,7 +26,7 @@ Fill in `.env` with:
 - `DATABASE_URL` — from step 1's output
 - `JWT_SECRET` — generate one: `openssl rand -hex 48`
 - `QDRANT_API_URL`, `QDRANT_API_SECRET` — your Qdrant Cloud cluster
-- `GEMINI_API_KEY` — your Gemini key
+- `LLM_PROVIDER` — `openai` or `gemini`, and the matching key: `OPENAI_API_KEY` (or `OPEN_API_KEY`) / `GEMINI_API_KEY`
 
 ## 3. Deploy
 

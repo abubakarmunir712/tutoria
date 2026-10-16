@@ -35,6 +35,12 @@ services:
       QDRANT_API_URL: ${QDRANT_API_URL}
       QDRANT_API_SECRET: ${QDRANT_API_SECRET}
       LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      # Only read when LLM_PROVIDER=openai. The key may be named either way in .env.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPEN_API_KEY: ${OPEN_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      OPENAI_STT_MODEL: ${OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
+      OPENAI_TTS_MODEL: ${OPENAI_TTS_MODEL:-gpt-4o-mini-tts}
     restart: unless-stopped
