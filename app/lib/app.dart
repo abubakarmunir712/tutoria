@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/activity.dart';
 import 'core/api_client.dart';
 import 'core/design/design.dart';
+import 'core/photos.dart';
 import 'core/voice.dart';
 import 'features/auth/auth_state.dart';
 import 'features/home/main_shell.dart';
@@ -25,6 +26,7 @@ class TutoriaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<ApiClient>(create: (_) => api ?? ApiClient()),
+        ChangeNotifierProvider<LearnerPhotos>(create: (_) => LearnerPhotos()),
         ChangeNotifierProvider<ActivityTracker>(
           create: (_) => ActivityTracker(),
         ),

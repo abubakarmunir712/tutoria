@@ -101,7 +101,7 @@ class StepDots extends StatelessWidget {
   }
 }
 
-/// The Tutoria logo: the T mark beside the wordmark, in white for blue backgrounds or brand
+/// The Tutoria logo: the wordmark (no T mark), in white for blue backgrounds or brand
 /// blue for light ones, with the tagline underneath when [tagline] is set.
 class Wordmark extends StatelessWidget {
   const Wordmark({
@@ -126,8 +126,6 @@ class Wordmark extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset('assets/images/logo_mark.png', height: size * 1.05),
-            SizedBox(width: size * 0.2),
             Stack(
               clipBehavior: Clip.none,
               children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/photos.dart';
 import '../../core/activity.dart';
 import '../../core/design/design.dart';
 import '../../core/models.dart';
@@ -143,7 +144,11 @@ class StudentHomeScreen extends StatelessWidget {
                             foreground: TColors.blue600,
                           ),
                           const SizedBox(width: TSpace.sm),
-                          Avatar(name: learner.name, size: 44),
+                          LearnerAvatar(
+                            learnerId: learner.id,
+                            name: learner.name,
+                            size: 44,
+                          ),
                         ],
                       ),
                       const SizedBox(height: TSpace.xl),
@@ -216,7 +221,7 @@ class StudentHomeScreen extends StatelessWidget {
                               const SizedBox(width: TSpace.sm),
                               Expanded(
                                 child: _ActionTile(
-                                  title: 'Take a\nPicture',
+                                  title: 'Snap &\nSolve',
                                   subtitle: 'Solve with\nyour camera',
                                   icon: Icons.photo_camera_rounded,
                                   accent: const Color(0xFFFF4B6E),
@@ -277,14 +282,15 @@ class StudentHomeScreen extends StatelessWidget {
                                 style: TText.heading,
                               ),
                             ),
-                            TextButton(
+                            TextButton.icon(
                               onPressed: () => Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) =>
                                       SubjectsScreen(learnerId: learner.id),
                                 ),
                               ),
-                              child: const Text('Edit'),
+                              icon: const Icon(Icons.add_rounded, size: 18),
+                              label: const Text('Add subject'),
                             ),
                           ],
                         ),

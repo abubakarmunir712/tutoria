@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/design/design.dart';
 import '../../core/grade_labels.dart';
 import '../../core/models.dart';
+import '../../core/photos.dart';
 import '../auth/auth_state.dart';
 import 'subjects_screen.dart';
 
@@ -35,6 +39,9 @@ class _LearnerDetailsScreenState extends State<LearnerDetailsScreen> {
   String? _grade;
   String? _schoolType;
 
+  /// A picture chosen on this screen; saved against the learner once they exist.
+  Uint8List? _photo;
+
   bool get _editing => widget.existing != null;
 
   @override
@@ -56,6 +63,51 @@ class _LearnerDetailsScreenState extends State<LearnerDetailsScreen> {
   void dispose() {
     _name.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_rounded),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    try {
+      // Small is plenty for an avatar, and keeps what is stored on the phone tiny.
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 384,
+        maxHeight: 384,
+        imageQuality: 80,
+        preferredCameraDevice: CameraDevice.front,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (mounted) setState(() => _photo = bytes);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not use that picture. Try again.'),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -88,6 +140,10 @@ class _LearnerDetailsScreenState extends State<LearnerDetailsScreen> {
       );
     }
     if (learner == null || !mounted) return;
+    if (_photo != null) {
+      await context.read<LearnerPhotos>().set(learner.id, _photo!);
+    }
+    if (!mounted) return;
 
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -163,7 +219,53 @@ class _LearnerDetailsScreenState extends State<LearnerDetailsScreen> {
                     style: TText.body.copyWith(color: TColors.muted),
                   ),
                   const SizedBox(height: TSpace.xl),
-                  Center(child: Avatar(name: _name.text, size: 88)),
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickPhoto,
+                      child: Semantics(
+                        button: true,
+                        label: 'Add a picture',
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            _photo != null
+                                ? Avatar(
+                                    name: _name.text,
+                                    size: 88,
+                                    photo: _photo,
+                                  )
+                                : LearnerAvatar(
+                                    learnerId: _editing
+                                        ? widget.existing!.id
+                                        : null,
+                                    name: _name.text,
+                                    size: 88,
+                                  ),
+                            Positioned(
+                              right: -2,
+                              bottom: -2,
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: TColors.blue600,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.photo_camera_rounded,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: TSpace.xl),
                   TTextField(
                     controller: _name,

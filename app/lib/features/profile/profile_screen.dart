@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/photos.dart';
 import '../../core/design/design.dart';
 import '../../core/models.dart';
 import '../auth/auth_state.dart';
@@ -107,7 +108,11 @@ class _LearnerRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Avatar(name: learner.name, size: 48),
+              LearnerAvatar(
+                learnerId: learner.id,
+                name: learner.name,
+                size: 48,
+              ),
               const SizedBox(width: TSpace.md),
               Expanded(
                 child: Column(

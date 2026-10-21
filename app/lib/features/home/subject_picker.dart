@@ -4,7 +4,7 @@ import '../../core/design/design.dart';
 import '../../core/models.dart';
 import '../chat/chat_screen.dart';
 
-/// Asks "Which subject?" when a learner has several; with one subject it is chosen for them.
+/// Asks "Choose a subject" when a learner has several; with one subject it is chosen for them.
 Future<Subject?> pickSubject(BuildContext context, Learner learner) async {
   if (learner.subjects.length == 1) return learner.subjects.first;
   return showModalBottomSheet<Subject>(
@@ -21,7 +21,7 @@ Future<Subject?> pickSubject(BuildContext context, Learner learner) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Which subject?', style: TText.heading),
+            Text('Choose a subject', style: TText.heading),
             const SizedBox(height: TSpace.md),
             for (final s in learner.subjects)
               ListTile(

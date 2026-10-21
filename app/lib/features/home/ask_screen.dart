@@ -65,7 +65,7 @@ class AskScreen extends StatelessWidget {
                 icon: Icons.photo_camera_rounded,
                 accent: const Color(0xFFFF4B6E),
                 tint: TColors.englishTint,
-                title: 'Take a picture',
+                title: 'Snap & Solve',
                 subtitle: 'Snap your homework question',
                 onTap: enabled
                     ? () => openTutorChat(context, learner, camera: true)

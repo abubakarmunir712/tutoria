@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../tokens.dart';
@@ -43,10 +45,13 @@ class IconBadge extends StatelessWidget {
 /// A round avatar showing someone's initials on a colour chosen from their name, so a child
 /// keeps the same colour everywhere.
 class Avatar extends StatelessWidget {
-  const Avatar({super.key, required this.name, this.size = 48});
+  const Avatar({super.key, required this.name, this.size = 48, this.photo});
 
   final String name;
   final double size;
+
+  /// A picture to show instead of the initials.
+  final Uint8List? photo;
 
   static const _palette = [
     (TColors.mathsAccent, TColors.mathsTint),
@@ -86,7 +91,17 @@ class Avatar extends StatelessWidget {
           ),
         ],
       ),
-      child: trimmed.isEmpty
+      child: photo != null
+          ? ClipOval(
+              child: Image.memory(
+                photo!,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ),
+            )
+          : trimmed.isEmpty
           ? Icon(Icons.person_rounded, color: accent, size: size * 0.5)
           : Text(
               initials,

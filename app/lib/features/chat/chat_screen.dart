@@ -9,10 +9,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/activity.dart';
 import '../../core/api_client.dart';
-import '../../core/api_config.dart';
 import '../../core/design/design.dart';
 import '../../core/grade_labels.dart';
+import '../../core/photos.dart';
 import '../../core/voice.dart';
+import '../auth/auth_state.dart';
 
 class _ChatMessage {
   _ChatMessage.user(this.text)
@@ -34,7 +35,7 @@ class _ChatMessage {
 /// The tutor chat for one subject: ask in words or with a photo of the homework.
 ///
 /// [initialQuestion] is sent as soon as the screen opens (a topic tapped in the topic list);
-/// [startWithCamera] opens the camera straight away ("Take a Picture" on the home screen).
+/// [startWithCamera] opens the camera straight away ("Snap & Solve" on the home screen).
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
@@ -438,6 +439,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             loadingSpeech:
                                 _speakingIndex == i && _loadingSpeech,
                             onListen: () => _speak(i),
+                            learnerId: widget.learnerId,
                           ),
                   ),
           ),
@@ -469,10 +471,17 @@ class _EmptyChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // (button label, what is sent to the tutor)
     final prompts = [
-      'Help me with my homework',
-      'Explain something I don’t understand',
-      'Show me an example',
+      ('Help me with my homework', 'Help me with my homework'),
+      (
+        'Tutoria Challenge',
+        'Give me a $subject challenge question to test what I know.',
+      ),
+      (
+        'Start your exam prep',
+        'Help me prepare for my $subject exam. Start with a question.',
+      ),
     ];
     return ListView(
       padding: const EdgeInsets.all(TSpace.page),
@@ -492,11 +501,11 @@ class _EmptyChat extends StatelessWidget {
           style: TText.body.copyWith(color: TColors.muted),
         ),
         const SizedBox(height: TSpace.xl),
-        for (final p in prompts) ...[
+        for (final (label, message) in prompts) ...[
           TButton(
-            label: p,
+            label: label,
             style: TButtonStyle.soft,
-            onPressed: () => onPrompt(p),
+            onPressed: () => onPrompt(message),
           ),
           const SizedBox(height: TSpace.md),
         ],
@@ -765,15 +774,32 @@ class _TutorAvatar extends StatelessWidget {
   }
 }
 
+/// The learner's picture (or initials) beside their own messages, as the tutor has its mascot.
+class _LearnerBadge extends StatelessWidget {
+  const _LearnerBadge({this.learnerId});
+
+  final String? learnerId;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = learnerId == null
+        ? ''
+        : context.read<AuthState>().learnerById(learnerId!)?.name ?? '';
+    return LearnerAvatar(learnerId: learnerId, name: name, size: 36);
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     required this.message,
     this.speaking = false,
     this.loadingSpeech = false,
     this.onListen,
+    this.learnerId,
   });
 
   final _ChatMessage message;
+  final String? learnerId;
   final bool speaking;
   final bool loadingSpeech;
   final VoidCallback? onListen;
@@ -843,7 +869,15 @@ class _MessageBubble extends StatelessWidget {
             : CrossAxisAlignment.start,
         children: [
           user
-              ? bubble
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(child: bubble),
+                    const SizedBox(width: TSpace.sm),
+                    _LearnerBadge(learnerId: learnerId),
+                  ],
+                )
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -898,35 +932,8 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ),
-          if (_citationImages(message.citations).isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8, left: 44),
-              child: SizedBox(
-                height: 90,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  shrinkWrap: true,
-                  itemCount: _citationImages(message.citations).length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, i) => ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      '$apiBaseUrl/${_citationImages(message.citations)[i]}',
-                      height: 90,
-                      errorBuilder: (_, _, _) => const SizedBox(
-                        width: 90,
-                        child: Icon(Icons.broken_image_outlined),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
-
-  List<String> _citationImages(List<ChatCitation> citations) =>
-      citations.expand((c) => c.images).toSet().toList();
 }

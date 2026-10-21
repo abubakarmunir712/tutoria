@@ -8,6 +8,7 @@ import 'package:tutoria/core/activity.dart';
 import 'package:tutoria/core/api_client.dart';
 import 'package:tutoria/core/design/design.dart';
 import 'package:tutoria/core/models.dart';
+import 'package:tutoria/core/photos.dart';
 import 'package:tutoria/core/voice.dart';
 import 'package:tutoria/features/auth/auth_state.dart';
 
@@ -132,6 +133,9 @@ class FakeApi extends ApiClient {
   List<Subject> subjects;
   final asked = <String>[];
 
+  /// Curriculum diagram paths the fake server attaches to every answer.
+  List<String> citationImages = const [];
+
   /// What the fake recogniser "heard" for a spoken question, and how many replies were read out.
   String heard = 'How do I add fractions?';
   var spoken = 0;
@@ -174,7 +178,7 @@ class FakeApi extends ApiClient {
           indicatorCode: 'B4.1.3.1.1',
           strand: 'Number',
           substrand: 'Fractions',
-          images: const [],
+          images: citationImages,
         ),
       ],
     );
@@ -222,6 +226,7 @@ Future<void> pumpApp(
   Me? me,
   FakeVoice? voice,
   ActivityTracker? activity,
+  LearnerPhotos? photos,
   AuthStatus status = AuthStatus.authenticated,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532); // 390 x 844 logical at 3x
@@ -237,6 +242,9 @@ Future<void> pumpApp(
       providers: [
         Provider<ApiClient>.value(value: fake),
         Provider<VoiceService>.value(value: voice ?? FakeVoice()),
+        ChangeNotifierProvider<LearnerPhotos>.value(
+          value: photos ?? LearnerPhotos(),
+        ),
         ChangeNotifierProvider<ActivityTracker>.value(
           value: activity ?? ActivityTracker(),
         ),
