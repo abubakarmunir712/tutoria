@@ -56,6 +56,9 @@ model Student {
   name       String
   grade      Grade?
   schoolType SchoolType?
+  // The profile picture lives on disk (UPLOADS_DIR/students/<id>); these only say it exists.
+  photoMime      String?
+  photoUpdatedAt DateTime?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 

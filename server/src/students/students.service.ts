@@ -9,6 +9,7 @@ import { phaseForGrade } from '../common/grade-phase';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { PhotoStorage } from './photo-storage.service';
 
 const studentInclude = {
   enrollments: { include: { subject: true } },
@@ -16,7 +17,10 @@ const studentInclude = {
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly photos: PhotoStorage,
+  ) {}
 
   /** The signed-in user with their learner profiles (children, or their own). */
   async getMe(userId: string) {
@@ -97,6 +101,42 @@ export class StudentsService {
     );
     await this.owned(userId, studentId);
     await this.prisma.student.delete({ where: { id: studentId } });
+    await this.photos.remove(studentId);
+  }
+
+  /** Store (or replace) a learner's profile picture. */
+  async setPhoto(
+    userId: string,
+    studentId: string,
+    bytes: Buffer,
+    mime: string,
+  ) {
+    await this.owned(userId, studentId);
+    await this.photos.save(studentId, bytes);
+    return this.prisma.student.update({
+      where: { id: studentId },
+      data: { photoMime: mime, photoUpdatedAt: new Date() },
+      include: studentInclude,
+    });
+  }
+
+  async getPhoto(userId: string, studentId: string) {
+    const student = await this.owned(userId, studentId);
+    const bytes = student.photoMime ? await this.photos.read(studentId) : null;
+    if (!bytes || !student.photoMime) {
+      throw new NotFoundException('No profile picture');
+    }
+    return { bytes, mime: student.photoMime };
+  }
+
+  async removePhoto(userId: string, studentId: string) {
+    await this.owned(userId, studentId);
+    await this.photos.remove(studentId);
+    return this.prisma.student.update({
+      where: { id: studentId },
+      data: { photoMime: null, photoUpdatedAt: null },
+      include: studentInclude,
+    });
   }
 
   /** Replace the subjects a learner studies. Every subject must exist in their phase. */

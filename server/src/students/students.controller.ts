@@ -5,13 +5,19 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseFilePipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Put,
   Query,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { Grade } from '@prisma/client';
 import { IsEnum, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +26,9 @@ import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { SetSubjectsDto } from './dto/set-subjects.dto';
+import { ImageFileValidator } from '../chat/validators/image-file.validator';
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 class SubjectsQuery {
   @IsOptional()
@@ -73,4 +82,50 @@ export class StudentsController {
   ) {
     return this.students.setSubjects(userId, id, dto.subjectIds);
   }
+
+  // Profile picture: JPEG/PNG/WebP, up to 5 MB, stored on the server's disk.
+  @Put('students/:id/photo')
+  @UseInterceptors(
+    FileInterceptor('photo', { limits: { fileSize: MAX_PHOTO_BYTES } }),
+  )
+  setPhoto(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(new ParseFilePipe({ validators: [new ImageFileValidator()] }))
+    file: Express.Multer.File,
+  ) {
+    return this.students.setPhoto(
+      userId,
+      id,
+      file.buffer,
+      sniffMime(file.buffer),
+    );
+  }
+
+  @Get('students/:id/photo')
+  async getPhoto(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { bytes, mime } = await this.students.getPhoto(userId, id);
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.send(bytes);
+  }
+
+  @Delete('students/:id/photo')
+  removePhoto(
+    @CurrentUser() userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.students.removePhoto(userId, id);
+  }
+}
+
+/** The type of an already-validated image, from its leading bytes (not the client's claim). */
+function sniffMime(b: Buffer) {
+  if (b[0] === 0xff) return 'image/jpeg';
+  if (b[0] === 0x89) return 'image/png';
+  return 'image/webp';
 }

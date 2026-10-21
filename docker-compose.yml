@@ -20,6 +20,10 @@ services:
       # Internal Docker network address — NOT localhost. Resolves via the
       # `ai-service` container name on the network Compose creates automatically.
       AI_SERVICE_URL: http://ai-service:8000
+      # Profile pictures live on disk; the volume keeps them across redeploys.
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       - ai-service
     restart: unless-stopped
@@ -44,3 +48,6 @@ services:
       OPENAI_STT_MODEL: ${OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}
       OPENAI_TTS_MODEL: ${OPENAI_TTS_MODEL:-gpt-4o-mini-tts}
     restart: unless-stopped
+
+volumes:
+  uploads:
