@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
 import 'models.dart';
+import 'progress.dart';
 import 'secure_storage.dart';
 
 class ChatCitation {
@@ -30,17 +31,23 @@ class ChatCitation {
 }
 
 class ChatResponse {
-  ChatResponse({required this.answer, required this.citations});
+  ChatResponse({required this.answer, required this.citations, this.award});
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) => ChatResponse(
     answer: json['answer'] as String,
     citations: (json['citations'] as List)
         .map((c) => ChatCitation.fromJson(c as Map<String, dynamic>))
         .toList(),
+    award: json['progress'] is Map<String, dynamic>
+        ? Award.fromJson(json['progress'] as Map<String, dynamic>)
+        : null,
   );
 
   final String answer;
   final List<ChatCitation> citations;
+
+  /// What the question earned the learner, when the server was told who asked.
+  final Award? award;
 }
 
 class ApiException implements Exception {
@@ -233,6 +240,29 @@ class ApiClient {
     return Learner.fromJson(await _decode(res));
   }
 
+  // --- Progress
+
+  /// How one learner is doing: XP, level, streak, the week, subjects and badges.
+  Future<Progress> getProgress(String learnerId) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/me/students/$learnerId/progress'),
+        headers: _json(t),
+      ),
+    );
+    return Progress.fromJson(await _decode(res));
+  }
+
+  /// Every learner on the account with their progress (a parent's whole family at once).
+  Future<List<ChildProgress>> getAllProgress() async {
+    final res = await _authed(
+      (t) => _client.get(_uri('/me/progress'), headers: _json(t)),
+    );
+    return (_decodeBody(res) as List)
+        .map((c) => ChildProgress.fromJson(c as Map<String, dynamic>))
+        .toList();
+  }
+
   // --- Curriculum and tutoring
 
   /// The curriculum's strands and topics for a class and subject, in curriculum order.
@@ -252,11 +282,16 @@ class ApiClient {
         .toList();
   }
 
+  /// [learnerId] says who is asking, so the question earns them XP and counts toward their
+  /// streak; [spoken] marks a question the child said aloud.
   Future<ChatResponse> askQuestion({
     required String question,
     String? grade,
     String? subject,
     List<Map<String, String>>? history,
+    String? learnerId,
+    String? topic,
+    bool spoken = false,
   }) async {
     final res = await _authed(
       (token) => _client.post(
@@ -267,6 +302,9 @@ class ApiClient {
           'grade': grade,
           'subject': subject,
           'history': history ?? [],
+          'studentId': ?learnerId,
+          'topic': ?topic,
+          if (spoken) 'via': 'voice',
         }),
       ),
     );
@@ -278,6 +316,8 @@ class ApiClient {
     String? grade,
     String? subject,
     List<Map<String, String>>? history,
+    String? learnerId,
+    String? topic,
   }) async {
     final res = await _authed((token) async {
       // A multipart request can only be sent once, so each attempt builds its own.
@@ -286,6 +326,8 @@ class ApiClient {
         ..files.add(await http.MultipartFile.fromPath('image', image.path));
       if (grade != null) request.fields['grade'] = grade;
       if (subject != null) request.fields['subject'] = subject;
+      if (learnerId != null) request.fields['studentId'] = learnerId;
+      if (topic != null) request.fields['topic'] = topic;
       // Multipart forms carry strings only, so prior turns go as a JSON string.
       if (history != null && history.isNotEmpty) {
         request.fields['history'] = jsonEncode(history);
@@ -296,11 +338,12 @@ class ApiClient {
   }
 
   /// A spoken question as text. The caller shows it and sends it like a typed message.
-  Future<String> transcribeAudio(File audio) async {
+  Future<String> transcribeAudio(File audio, {String? learnerId}) async {
     final res = await _authed((token) async {
       final request = http.MultipartRequest('POST', _uri('/chat/transcribe'))
         ..headers['Authorization'] = 'Bearer $token'
         ..files.add(await http.MultipartFile.fromPath('audio', audio.path));
+      if (learnerId != null) request.fields['studentId'] = learnerId;
       return http.Response.fromStream(await _client.send(request));
     });
     final body = await _decode(res);
@@ -308,12 +351,12 @@ class ApiClient {
   }
 
   /// A tutor reply as spoken audio (WAV).
-  Future<Uint8List> speak(String text) async {
+  Future<Uint8List> speak(String text, {String? learnerId}) async {
     final res = await _authed(
       (token) => _client.post(
         _uri('/chat/speak'),
         headers: _json(token),
-        body: jsonEncode({'text': text}),
+        body: jsonEncode({'text': text, 'studentId': ?learnerId}),
       ),
     );
     if (res.statusCode < 200 || res.statusCode >= 300) {

@@ -12,8 +12,10 @@ import '../../core/api_client.dart';
 import '../../core/design/design.dart';
 import '../../core/grade_labels.dart';
 import '../../core/photos.dart';
+import '../../core/progress.dart';
 import '../../core/voice.dart';
 import '../auth/auth_state.dart';
+import '../progress/reward_toast.dart';
 
 class _ChatMessage {
   _ChatMessage.user(this.text)
@@ -117,6 +119,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Show what the answer earned and bring the learner's saved progress up to date.
+  void _celebrate(Award? award) {
+    final id = widget.learnerId;
+    if (id == null || award == null || !mounted) return;
+    showAward(context, award);
+    unawaited(context.read<ProgressStore>().refresh(id));
+  }
+
   /// Kept from initState: dispose() can't look anything up through the context.
   late final VoiceService _voice;
 
@@ -174,8 +184,12 @@ class _ChatScreenState extends State<ChatScreen> {
         grade: widget.grade,
         subject: widget.subject,
         history: history,
+        learnerId: widget.learnerId,
+        topic: widget.topic,
+        spoken: spoken,
       );
       _addAiMessage(response.answer, response.citations);
+      _celebrate(response.award);
       if (spoken) {
         unawaited(_speak(_messages.length - 1));
       }
@@ -222,7 +236,9 @@ class _ChatScreenState extends State<ChatScreen> {
     String text = '';
     try {
       final file = await _voice.stopRecording();
-      if (file != null) text = await _api.transcribeAudio(file);
+      if (file != null) {
+        text = await _api.transcribeAudio(file, learnerId: widget.learnerId);
+      }
     } on ApiException catch (e) {
       _addAiMessage('Error: ${e.message}');
     } catch (_) {
@@ -267,7 +283,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _loadingSpeech = true;
     });
     try {
-      final audio = await _api.speak(text);
+      final audio = await _api.speak(text, learnerId: widget.learnerId);
       if (!mounted || _speakingIndex != index) return;
       setState(() => _loadingSpeech = false);
       await _voice.play(audio);
@@ -363,8 +379,11 @@ class _ChatScreenState extends State<ChatScreen> {
         grade: widget.grade,
         subject: widget.subject,
         history: history,
+        learnerId: widget.learnerId,
+        topic: widget.topic,
       );
       _addAiMessage(response.answer, response.citations);
+      _celebrate(response.award);
     } on ApiException catch (e) {
       _addAiMessage('Error: ${e.message}');
     } catch (_) {

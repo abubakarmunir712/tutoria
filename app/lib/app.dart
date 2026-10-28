@@ -5,6 +5,7 @@ import 'core/activity.dart';
 import 'core/api_client.dart';
 import 'core/design/design.dart';
 import 'core/photos.dart';
+import 'core/progress.dart';
 import 'core/voice.dart';
 import 'features/auth/auth_state.dart';
 import 'features/home/main_shell.dart';
@@ -29,6 +30,12 @@ class TutoriaApp extends StatelessWidget {
         ChangeNotifierProvider<LearnerPhotos>(create: (_) => LearnerPhotos()),
         ChangeNotifierProvider<ActivityTracker>(
           create: (_) => ActivityTracker(),
+        ),
+        ChangeNotifierProvider<ProgressStore>(
+          create: (context) => ProgressStore(
+            api: context.read<ApiClient>(),
+            activity: context.read<ActivityTracker>(),
+          ),
         ),
         Provider<VoiceService>(
           create: (_) => voice ?? DeviceVoiceService(),

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'progress.dart';
+
 String dayKey(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -45,6 +47,16 @@ class LearnerActivity {
   final List<String> days;
 
   bool get hasActivity => lastSubject != null;
+
+  /// The server's record of a learner, as the phone-side activity the screens read.
+  factory LearnerActivity.fromProgress(Progress p) => LearnerActivity(
+    lastSubject: p.lastSubject,
+    lastTopic: p.lastTopic,
+    lastAt: p.lastActiveAt?.toLocal(),
+    questions: p.questions,
+    bySubject: p.bySubject,
+    days: p.days,
+  );
 
   /// Consecutive days up to today (or up to yesterday, so the streak isn't lost before the
   /// child has had a chance to study today).
@@ -121,6 +133,19 @@ class ActivityTracker extends ChangeNotifier {
     _cache.putIfAbsent(learnerId, () => loaded);
     _loading.remove(learnerId);
     notifyListeners();
+  }
+
+  /// Replace what is kept for a learner with what the server knows.
+  Future<void> replaceWith(String learnerId, Progress progress) async {
+    final updated = LearnerActivity.fromProgress(progress);
+    _cache[learnerId] = updated;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_key(learnerId), jsonEncode(updated.toJson()));
+    } catch (_) {
+      // Not being able to save just means the next start asks the server again.
+    }
   }
 
   Future<void> record(

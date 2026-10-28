@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutoria/core/activity.dart';
 import 'package:tutoria/core/models.dart';
+import 'package:tutoria/core/progress.dart';
 import 'package:tutoria/features/auth/auth_state.dart';
 import 'package:tutoria/features/auth/login_screen.dart';
 import 'package:tutoria/features/auth/signup_screen.dart';
@@ -19,6 +20,8 @@ import 'package:tutoria/features/home/student_home_screen.dart';
 import 'package:tutoria/features/onboarding/learner_details_screen.dart';
 import 'package:tutoria/features/onboarding/subjects_screen.dart';
 import 'package:tutoria/features/onboarding/user_type_screen.dart';
+import 'package:tutoria/features/progress/child_progress_screen.dart';
+import 'package:tutoria/features/progress/rewards_screen.dart';
 import 'package:tutoria/features/onboarding/welcome_screen.dart';
 import 'package:tutoria/features/subjects/subject_screen.dart';
 
@@ -143,6 +146,67 @@ void main() {
       expect(find.text('4'), findsOneWidget); // questions asked
       expect(find.text('3 days'), findsOneWidget); // streak
       await golden(t, 'student_home_progress');
+    });
+    testWidgets('parent home, with the children’s progress', (t) async {
+      final api = FakeApi(me: parentMe)
+        ..progress['l-ama'] = amaProgress()
+        ..progress['l-kofi'] = const Progress(studentId: 'l-kofi');
+      await pumpApp(
+        t,
+        ParentHomeScreen(now: morning),
+        me: parentMe,
+        api: api,
+      );
+      await t.pump(const Duration(milliseconds: 300));
+      await golden(t, 'parent_home_progress');
+    });
+    testWidgets('a child’s progress, as a parent sees it', (t) async {
+      final api = FakeApi(me: parentMe)..progress['l-ama'] = amaProgress();
+      await pumpApp(
+        t,
+        ChildProgressScreen(learnerId: 'l-ama', now: morning),
+        me: parentMe,
+        api: api,
+      );
+      t.view.physicalSize = const Size(1170, 5200); // the whole page
+      await t.pump(const Duration(milliseconds: 300));
+      await golden(t, 'child_progress');
+    });
+    testWidgets('student home, with the saved score', (t) async {
+      final api = FakeApi(me: studentMe)..progress['l-ama'] = amaProgress();
+      await pumpApp(
+        t,
+        StudentHomeScreen(learnerId: 'l-ama', isOwn: true, now: morning),
+        me: studentMe,
+        api: api,
+      );
+      t.view.physicalSize = const Size(1170, 3500);
+      await t.pump(const Duration(milliseconds: 300));
+      await golden(t, 'student_home_score');
+    });
+    testWidgets('rewards', (t) async {
+      final api = FakeApi(me: studentMe)..progress['l-ama'] = amaProgress();
+      await pumpApp(
+        t,
+        const RewardsScreen(learnerId: 'l-ama'),
+        me: studentMe,
+        api: api,
+      );
+      t.view.physicalSize = const Size(1170, 3400);
+      await t.pump(const Duration(milliseconds: 300));
+      await golden(t, 'rewards');
+    });
+    testWidgets('progress tab, with the saved score', (t) async {
+      final api = FakeApi(me: studentMe)..progress['l-ama'] = amaProgress();
+      await pumpApp(
+        t,
+        ProgressScreen(learnerId: 'l-ama', now: morning),
+        me: studentMe,
+        api: api,
+      );
+      t.view.physicalSize = const Size(1170, 3000);
+      await t.pump(const Duration(milliseconds: 300));
+      await golden(t, 'progress_tab_score');
     });
     testWidgets('student tabs', (t) async {
       await pumpApp(t, const MainShell(), me: studentMe);

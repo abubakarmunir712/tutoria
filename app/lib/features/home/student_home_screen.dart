@@ -5,9 +5,12 @@ import '../../core/photos.dart';
 import '../../core/activity.dart';
 import '../../core/design/design.dart';
 import '../../core/models.dart';
+import '../../core/progress.dart';
 import '../auth/auth_state.dart';
 import '../chat/chat_screen.dart';
 import '../onboarding/subjects_screen.dart';
+import '../progress/progress_widgets.dart';
+import '../progress/rewards_screen.dart';
 import '../subjects/subject_screen.dart';
 import 'subject_picker.dart';
 
@@ -100,6 +103,8 @@ class StudentHomeScreen extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final activity = context.watch<ActivityTracker>().of(learnerId);
+    final store = context.watch<ProgressStore>();
+    final progress = store.of(learnerId) ?? Progress(studentId: learnerId);
     final clock = now ?? DateTime.now();
     final hasSubjects = learner.subjects.isNotEmpty;
 
@@ -107,7 +112,10 @@ class StudentHomeScreen extends StatelessWidget {
       body: DecoratedBox(
         decoration: const BoxDecoration(gradient: TColors.pageGradient),
         child: RefreshIndicator(
-          onRefresh: auth.refreshMe,
+          onRefresh: () async {
+            await auth.refreshMe();
+            await store.refresh(learnerId);
+          },
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -246,6 +254,16 @@ class StudentHomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: TSpace.xl),
                         Text('Your learning journey', style: TText.heading),
+                        const SizedBox(height: TSpace.md),
+                        LevelCard(
+                          progress: progress,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  RewardsScreen(learnerId: learnerId),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: TSpace.md),
                         IntrinsicHeight(
                           child: Row(

@@ -9,6 +9,7 @@ import 'package:tutoria/core/api_client.dart';
 import 'package:tutoria/core/design/design.dart';
 import 'package:tutoria/core/models.dart';
 import 'package:tutoria/core/photos.dart';
+import 'package:tutoria/core/progress.dart';
 import 'package:tutoria/core/voice.dart';
 import 'package:tutoria/features/auth/auth_state.dart';
 
@@ -140,11 +141,38 @@ class FakeApi extends ApiClient {
   String heard = 'How do I add fractions?';
   var spoken = 0;
 
-  @override
-  Future<String> transcribeAudio(File audio) async => heard;
+  /// What the fake server reports for each learner, and the award it attaches to answers.
+  final progress = <String, Progress>{};
+  Award? award;
+  var progressFetches = 0;
 
   @override
-  Future<Uint8List> speak(String text) async {
+  Future<Progress> getProgress(String learnerId) async {
+    progressFetches++;
+    return progress[learnerId] ?? Progress(studentId: learnerId);
+  }
+
+  @override
+  Future<List<ChildProgress>> getAllProgress() async => [
+    for (final l in me.learners)
+      ChildProgress(
+        name: l.name,
+        grade: l.grade,
+        progress: progress[l.id] ?? Progress(studentId: l.id),
+      ),
+  ];
+
+  /// The learner, topic and voice flag of the most recent question.
+  String? askedBy;
+  String? askedTopic;
+  bool askedAloud = false;
+
+  @override
+  Future<String> transcribeAudio(File audio, {String? learnerId}) async =>
+      heard;
+
+  @override
+  Future<Uint8List> speak(String text, {String? learnerId}) async {
     spoken++;
     return Uint8List.fromList([1, 2, 3]);
   }
@@ -167,9 +195,16 @@ class FakeApi extends ApiClient {
     String? grade,
     String? subject,
     List<Map<String, String>>? history,
+    String? learnerId,
+    String? topic,
+    bool spoken = false,
   }) async {
     asked.add(question);
+    askedBy = learnerId;
+    askedTopic = topic;
+    askedAloud = spoken;
     return ChatResponse(
+      award: award,
       answer:
           'Great question! Before we start, what do you already know about **fractions**?\n\n'
           'Think of a pizza cut into 8 equal slices. If you eat 3 slices, what fraction did you eat?',
@@ -227,6 +262,7 @@ Future<void> pumpApp(
   FakeVoice? voice,
   ActivityTracker? activity,
   LearnerPhotos? photos,
+  ProgressStore? progressStore,
   AuthStatus status = AuthStatus.authenticated,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532); // 390 x 844 logical at 3x
@@ -234,6 +270,7 @@ Future<void> pumpApp(
   addTearDown(tester.view.reset);
 
   final fake = api ?? FakeApi(me: me ?? parentMe);
+  final tracker = activity ?? ActivityTracker();
   final auth = AuthState(api: fake)
     ..debugSet(status: status, me: me ?? fake.me);
 
@@ -245,8 +282,9 @@ Future<void> pumpApp(
         ChangeNotifierProvider<LearnerPhotos>.value(
           value: photos ?? LearnerPhotos(),
         ),
-        ChangeNotifierProvider<ActivityTracker>.value(
-          value: activity ?? ActivityTracker(),
+        ChangeNotifierProvider<ActivityTracker>.value(value: tracker),
+        ChangeNotifierProvider<ProgressStore>.value(
+          value: progressStore ?? ProgressStore(api: fake, activity: tracker),
         ),
         ChangeNotifierProvider<AuthState>.value(value: auth),
       ],
@@ -273,3 +311,84 @@ Future<void> pumpApp(
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
 }
+
+BadgeInfo _badge(
+  String code,
+  String name,
+  String what, {
+  bool earned = false,
+}) => BadgeInfo(
+  code: code,
+  name: name,
+  description: what,
+  earned: earned,
+  earnedAt: earned ? DateTime.utc(2026, 10, 15, 9) : null,
+);
+
+/// Ama after a good week: level 2, a 3-day streak, 12 questions in Maths and Science.
+Progress amaProgress({String id = 'l-ama'}) => Progress(
+  studentId: id,
+  xp: 120,
+  level: 2,
+  levelStartXp: 50,
+  nextLevelXp: 200,
+  streak: 3,
+  bestStreak: 3,
+  questions: 12,
+  photos: 1,
+  voices: 2,
+  lastSubject: 'Mathematics',
+  lastTopic: 'Number: Fractions',
+  lastActiveAt: DateTime.utc(2026, 10, 16, 8, 30),
+  bySubject: const {'Mathematics': 8, 'Science': 4},
+  days: const ['2026-10-14', '2026-10-15', '2026-10-16'],
+  // 10 Oct 2026 is a Saturday, so the week reads Sat Sun Mon Tue Wed Thu Fri.
+  week: const [
+    WeekDay(day: '2026-10-10', count: 0, xp: 0),
+    WeekDay(day: '2026-10-11', count: 2, xp: 20),
+    WeekDay(day: '2026-10-12', count: 0, xp: 0),
+    WeekDay(day: '2026-10-13', count: 1, xp: 10),
+    WeekDay(day: '2026-10-14', count: 3, xp: 40),
+    WeekDay(day: '2026-10-15', count: 2, xp: 20),
+    WeekDay(day: '2026-10-16', count: 4, xp: 30),
+  ],
+  questionsThisWeek: 12,
+  xpThisWeek: 120,
+  recentTopics: [
+    RecentTopic(
+      subject: 'Mathematics',
+      topic: 'Number: Fractions',
+      at: DateTime.utc(2026, 10, 16, 8, 30),
+    ),
+    RecentTopic(
+      subject: 'Science',
+      topic: 'Parts of a Plant',
+      at: DateTime.utc(2026, 10, 15, 16),
+    ),
+  ],
+  badges: [
+    _badge(
+      'first_question',
+      'First Steps',
+      'Ask your very first question',
+      earned: true,
+    ),
+    _badge('questions_10', 'Curious Mind', 'Ask 10 questions', earned: true),
+    _badge('questions_50', 'Question Machine', 'Ask 50 questions'),
+    _badge('streak_3', 'On a Roll', 'Learn 3 days in a row', earned: true),
+    _badge('streak_7', 'Week Warrior', 'Learn 7 days in a row'),
+    _badge(
+      'photo_homework',
+      'Snap and Solve',
+      'Get help with a homework photo',
+      earned: true,
+    ),
+    _badge(
+      'voice_question',
+      'Speak Up',
+      'Ask a question out loud',
+      earned: true,
+    ),
+    _badge('explorer', 'Explorer', 'Learn in 3 different subjects'),
+  ],
+);
