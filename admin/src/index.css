@@ -1,13 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@font-face {
+  font-family: "Nunito";
+  src: url("/fonts/Nunito-Variable.ttf") format("truetype");
+  font-weight: 200 1000;
+  font-display: swap;
+}
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Nunito', system-ui, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +54,39 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --background: #f3f8ff;
+    --foreground: #2b3a67;
+    --ink: #08185b;
+    --card: #ffffff;
+    --card-foreground: #2b3a67;
+    --popover: #ffffff;
+    --popover-foreground: #2b3a67;
+    --primary: #0561e6;
+    --primary-foreground: #ffffff;
+    --secondary: #fee517;
+    --secondary-foreground: #08185b;
+    --muted: #e2f1fe;
+    --muted-foreground: #61759f;
+    --accent: #e2f1fe;
+    --accent-foreground: #0245b0;
+    --destructive: #e5484d;
+    --border: #dce8f8;
+    --input: #dce8f8;
+    --ring: #0a7af5;
+    --chart-1: #0561e6;
+    --chart-2: #ff4b7d;
+    --chart-3: #12b886;
+    --chart-4: #fc7b0a;
+    --chart-5: #8b4de8;
+    --radius: 1rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #2b3a67;
+    --sidebar-primary: #0561e6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e2f1fe;
+    --sidebar-accent-foreground: #0245b0;
+    --sidebar-border: #dce8f8;
+    --sidebar-ring: #0a7af5;
 }
 
 .dark {
@@ -123,8 +129,15 @@
     }
   body {
     @apply bg-background text-foreground;
+    font-weight: 500;
     }
+  h1, h2, h3 { color: var(--ink); font-weight: 800; }
   html {
     @apply font-sans;
     }
 }
+.hero { background: linear-gradient(180deg, #0561e6, #0253d5); }
+.pop-card { box-shadow: 0 6px 18px rgba(2, 69, 176, 0.08); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .35s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
