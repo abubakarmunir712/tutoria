@@ -42,6 +42,8 @@ model User {
   phone        String   @unique
   passwordHash String
   role         UserRole
+  // Staff who can open the admin dashboard. Set by `npm run admin:create`, never by signup.
+  isAdmin      Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -51,19 +53,23 @@ model User {
 
 // A learner profile: one of a parent's children, or a student's own profile.
 model Student {
-  id         String      @id @default(uuid())
-  userId     String
-  name       String
-  grade      Grade?
-  schoolType SchoolType?
+  id             String      @id @default(uuid())
+  userId         String
+  name           String
+  grade          Grade?
+  schoolType     SchoolType?
   // The profile picture lives on disk (UPLOADS_DIR/students/<id>); these only say it exists.
   photoMime      String?
   photoUpdatedAt DateTime?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrollments Enrollment[]
+  stats       StudentStats?
+  events      LearningEvent[]
+  badges      StudentBadge[]
+  usage       UsageLog[]
 
   @@index([userId])
 }
@@ -91,12 +97,101 @@ model Enrollment {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   revokedAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum EventKind {
+  QUESTION
+  PHOTO
+  VOICE
+}
+
+enum UsageKind {
+  ASK
+  ASK_IMAGE
+  TRANSCRIBE
+  SPEAK
+}
+
+// One thing a learner did that earned XP (a typed question, a homework photo, a spoken question).
+// Quizzes and assignments will add their own kinds here.
+model LearningEvent {
+  id        String    @id @default(uuid())
+  studentId String
+  kind      EventKind
+  subject   String
+  topic     String?
+  xp        Int
+  createdAt DateTime  @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+  @@index([createdAt])
+}
+
+// Running totals for a learner, so the home screen and dashboards never have to add up events.
+model StudentStats {
+  studentId     String    @id
+  xp            Int       @default(0)
+  questions     Int       @default(0)
+  photos        Int       @default(0)
+  voices        Int       @default(0)
+  streak        Int       @default(0)
+  bestStreak    Int       @default(0)
+  // The last UTC calendar day (yyyy-MM-dd) with activity. Ghana is on UTC, so UTC days are
+  // the learners' days.
+  lastActiveDay String?
+  lastSubject   String?
+  lastTopic     String?
+  lastActiveAt  DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentBadge {
+  id        String   @id @default(uuid())
+  studentId String
+  code      String
+  earnedAt  DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, code])
+}
+
+// One call to the AI service: what it was, how big, and what it probably cost. The admin
+// dashboard's cost and usage figures come from here.
+model UsageLog {
+  id          String    @id @default(uuid())
+  studentId   String?
+  kind        UsageKind
+  subject     String?
+  inputChars  Int       @default(0)
+  outputChars Int       @default(0)
+  // An estimate from sizes and configured prices; the AI service does not report real usage.
+  costUsd     Float     @default(0)
+  ok          Boolean   @default(true)
+  durationMs  Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  student Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([studentId, createdAt])
+}
+
+// Admin-editable knobs (rate limits), stored as text.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

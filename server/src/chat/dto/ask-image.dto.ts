@@ -2,6 +2,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -16,6 +17,15 @@ export class AskImageDto {
   @IsOptional()
   @IsString()
   subject?: string;
+
+  @IsOptional()
+  @IsUUID()
+  studentId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  topic?: string;
 
   @IsOptional()
   @Type(() => Number)

@@ -11,10 +11,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ChatService } from './chat.service';
 import { AskDto } from './dto/ask.dto';
 import { AskImageDto } from './dto/ask-image.dto';
 import { SpeakDto } from './dto/speak.dto';
+import { TranscribeDto } from './dto/transcribe.dto';
 import { AudioFileValidator } from './validators/audio-file.validator';
 import { ImageFileValidator } from './validators/image-file.validator';
 
@@ -27,8 +29,8 @@ export class ChatController {
   constructor(private readonly chat: ChatService) {}
 
   @Post('ask')
-  ask(@Body() dto: AskDto) {
-    return this.chat.ask(dto);
+  ask(@CurrentUser() userId: string, @Body() dto: AskDto) {
+    return this.chat.ask(userId, dto);
   }
 
   // Homework photos: JPEG/PNG/WebP only (the app sends downscaled JPEGs), capped at 10 MB —
@@ -38,6 +40,7 @@ export class ChatController {
     FileInterceptor('image', { limits: { fileSize: MAX_IMAGE_BYTES } }),
   )
   askImage(
+    @CurrentUser() userId: string,
     @Body() dto: AskImageDto,
     @UploadedFile(
       new ParseFilePipe({
@@ -46,7 +49,7 @@ export class ChatController {
     )
     file: Express.Multer.File,
   ) {
-    return this.chat.askImage(dto, file);
+    return this.chat.askImage(userId, dto, file);
   }
 
   // Voice in: a spoken question becomes text. The app shows it and sends it through
@@ -56,6 +59,8 @@ export class ChatController {
     FileInterceptor('audio', { limits: { fileSize: MAX_AUDIO_BYTES } }),
   )
   transcribe(
+    @CurrentUser() userId: string,
+    @Body() dto: TranscribeDto,
     @UploadedFile(
       new ParseFilePipe({
         validators: [new AudioFileValidator()],
@@ -63,13 +68,21 @@ export class ChatController {
     )
     file: Express.Multer.File,
   ) {
-    return this.chat.transcribe(file);
+    return this.chat.transcribe(userId, dto.studentId, file);
   }
 
   // Voice out: a tutor reply becomes audio the app plays.
   @Post('speak')
-  async speak(@Body() dto: SpeakDto, @Res() res: Response) {
-    const { audio, mimeType } = await this.chat.speak(dto.text);
+  async speak(
+    @CurrentUser() userId: string,
+    @Body() dto: SpeakDto,
+    @Res() res: Response,
+  ) {
+    const { audio, mimeType } = await this.chat.speak(
+      userId,
+      dto.studentId,
+      dto.text,
+    );
     res.setHeader('Content-Type', mimeType);
     res.send(audio);
   }

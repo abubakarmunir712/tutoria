@@ -22,6 +22,10 @@ services:
       AI_SERVICE_URL: http://ai-service:8000
       # Profile pictures live on disk; the volume keeps them across redeploys.
       UPLOADS_DIR: /app/uploads
+      # The admin dashboard's web origin(s), and the prices behind its cost estimates.
+      ADMIN_ORIGINS: ${ADMIN_ORIGINS:-}
+      PRICE_INPUT_PER_M_TOKENS: ${PRICE_INPUT_PER_M_TOKENS:-}
+      PRICE_OUTPUT_PER_M_TOKENS: ${PRICE_OUTPUT_PER_M_TOKENS:-}
     volumes:
       - uploads:/app/uploads
     depends_on:

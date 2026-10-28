@@ -7,6 +7,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
 import { ChatModule } from '../src/chat/chat.module';
+import { StubPrismaModule } from './support/stub-prisma.module';
 
 // Voice endpoints: auth, upload validation, and the hand-off to the AI service (mocked).
 
@@ -35,6 +36,7 @@ describe('voice endpoints (e2e)', () => {
         }),
         PassportModule,
         JwtModule.register({ secret: SECRET }),
+        StubPrismaModule,
         ChatModule,
       ],
       providers: [JwtStrategy],
