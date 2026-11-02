@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from llm import get_llm_provider  # noqa: E402
+from grading import ASSIGNMENT_SYSTEM, QUESTION_SYSTEM, assignment_prompt, parse_grade, question_prompt  # noqa: E402
 from speech import speakable_text  # noqa: E402
 from topics import topics_for  # noqa: E402
 from retrieval import (  # noqa: E402
@@ -122,6 +123,51 @@ def topics(grade: str, subject: str):
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest):
     return _answer_grounded(req.question, req.grade, req.subject, req.top_k, req.history)
+
+
+class GradeRequest(BaseModel):
+    kind: str = "question"  # 'question' | 'assignment'
+    grade: str | None = None
+    subject: str | None = None
+    # question
+    question: str = ""
+    expected_answer: str = ""
+    rubric: str = ""
+    first_try: bool = True
+    # assignment
+    task: str = ""
+    success_criteria: str = ""
+    reflection: str = ""
+    # the child's answer / assignment response
+    answer: str
+
+
+class GradeResponse(BaseModel):
+    verdict: str  # 'correct' | 'partial' | 'incorrect'
+    feedback: str
+
+
+@app.post("/grade", response_model=GradeResponse)
+def grade(req: GradeRequest):
+    """Mark a quiz answer or an assignment. The tutor server only calls this when a cheap exact
+    match didn't settle a quiz answer, and falls back to its own keyword check if this fails."""
+    if req.kind == "assignment":
+        system = ASSIGNMENT_SYSTEM
+        user = assignment_prompt(
+            task=req.task, success_criteria=req.success_criteria, response=req.answer,
+            reflection=req.reflection, grade=req.grade, subject=req.subject,
+        )
+    else:
+        system = QUESTION_SYSTEM
+        user = question_prompt(
+            question=req.question, expected_answer=req.expected_answer, rubric=req.rubric,
+            student_answer=req.answer, grade=req.grade, subject=req.subject, first_try=req.first_try,
+        )
+    try:
+        return parse_grade(get_llm_provider().generate_json(system, user))
+    except ValueError as e:
+        log.warning("grader reply unusable: %s", e)
+        raise HTTPException(502, "The marker gave an unusable reply")
 
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024

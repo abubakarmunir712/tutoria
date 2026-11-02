@@ -104,3 +104,12 @@ class OpenAIProvider(LlmProvider):
             wav.setframerate(24000)
             wav.writeframes(response.content)
         return buf.getvalue(), "audio/wav"
+
+    def generate_json(self, system: str, user: str) -> str:
+        response = self._client.chat.completions.create(
+            model=self._model,
+            temperature=0,
+            response_format={"type": "json_object"},
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        )
+        return response.choices[0].message.content or ""

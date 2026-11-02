@@ -67,3 +67,8 @@ class LlmProvider(ABC):
     def synthesize_speech(self, text: str) -> tuple[bytes, str]:
         """Text-to-speech for a tutor reply (English). Returns (audio bytes, mime type)."""
         raise NotImplementedError
+
+    def generate_json(self, system: str, user: str) -> str:
+        """One short, deterministic completion that must reply with a JSON object (used to mark
+        quiz answers and assignments). Returns the reply text."""
+        raise NotImplementedError

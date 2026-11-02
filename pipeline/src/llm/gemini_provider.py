@@ -99,3 +99,15 @@ class GeminiProvider(LlmProvider):
         )
         part = response.candidates[0].content.parts[0].inline_data
         return part.data, part.mime_type or "audio/wav"
+
+    def generate_json(self, system: str, user: str) -> str:
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=user,
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                temperature=0,
+                response_mime_type="application/json",
+            ),
+        )
+        return response.text or ""
