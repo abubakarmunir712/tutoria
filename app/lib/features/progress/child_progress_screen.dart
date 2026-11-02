@@ -7,6 +7,7 @@ import '../../core/photos.dart';
 import '../../core/progress.dart';
 import '../auth/auth_state.dart';
 import '../home/student_home_screen.dart' show StudentHomeScreen, sinceLabel;
+import '../quiz/mastery_widgets.dart';
 import 'progress_widgets.dart';
 
 /// What a parent sees for one child: how often they study, what they study, their score and
@@ -79,6 +80,7 @@ class ChildProgressScreen extends StatelessWidget {
                 Text('Subjects', style: TText.heading),
                 const SizedBox(height: TSpace.md),
                 _Subjects(bySubject: p.bySubject),
+                MasterySection(learnerId: learnerId, forParent: true),
                 if (p.recentTopics.isNotEmpty) ...[
                   const SizedBox(height: TSpace.xl),
                   Text('Recently studied', style: TText.heading),

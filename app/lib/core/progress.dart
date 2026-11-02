@@ -80,6 +80,8 @@ class Progress {
     this.questions = 0,
     this.photos = 0,
     this.voices = 0,
+    this.quizzes = 0,
+    this.assignments = 0,
     this.lastSubject,
     this.lastTopic,
     this.lastActiveAt,
@@ -103,6 +105,8 @@ class Progress {
     questions: json['questions'] as int? ?? 0,
     photos: json['photos'] as int? ?? 0,
     voices: json['voices'] as int? ?? 0,
+    quizzes: json['quizzes'] as int? ?? 0,
+    assignments: json['assignments'] as int? ?? 0,
     lastSubject: json['lastSubject'] as String?,
     lastTopic: json['lastTopic'] as String?,
     lastActiveAt: DateTime.tryParse(json['lastActiveAt'] as String? ?? ''),
@@ -135,6 +139,8 @@ class Progress {
   final int questions;
   final int photos;
   final int voices;
+  final int quizzes;
+  final int assignments;
   final String? lastSubject;
   final String? lastTopic;
   final DateTime? lastActiveAt;
@@ -158,7 +164,7 @@ class Progress {
 
   List<BadgeInfo> get earnedBadges => badges.where((b) => b.earned).toList();
 
-  bool get hasActivity => questions > 0;
+  bool get hasActivity => questions > 0 || quizzes > 0 || assignments > 0;
 }
 
 /// A child in the parent's list: their name and class with how they are doing.

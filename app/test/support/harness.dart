@@ -10,6 +10,7 @@ import 'package:tutoria/core/design/design.dart';
 import 'package:tutoria/core/models.dart';
 import 'package:tutoria/core/photos.dart';
 import 'package:tutoria/core/progress.dart';
+import 'package:tutoria/core/quiz.dart';
 import 'package:tutoria/core/voice.dart';
 import 'package:tutoria/features/auth/auth_state.dart';
 
@@ -145,6 +146,143 @@ class FakeApi extends ApiClient {
   final progress = <String, Progress>{};
   Award? award;
   var progressFetches = 0;
+
+  /// Practice: the units the fake server lists, and the quiz it runs (one question that is
+  /// right when answered "right"; "wrong" is nudged once, then revealed).
+  var units = <PracticeUnit>[
+    const PracticeUnit(
+      id: 'u1',
+      name: 'Number and place value',
+      strand: 'Number',
+      order: 1,
+      mastery: Mastery.notStarted,
+      recommended: true,
+    ),
+    const PracticeUnit(
+      id: 'u2',
+      name: 'Operations',
+      strand: 'Number',
+      order: 2,
+      mastery: Mastery.secure,
+      bestScore: 0.9,
+      attempts: 2,
+    ),
+  ];
+  final answers = <String>[];
+  var tries = 0;
+
+  @override
+  Future<PracticeList> practiceUnits({
+    required String learnerId,
+    required String subject,
+  }) async => PracticeList(
+    subject: subject,
+    summary: const MasterySummary(total: 2, started: 1, secure: 1),
+    units: units,
+  );
+
+  @override
+  Future<MasteryOverview> masteryOverview(String learnerId) async =>
+      MasteryOverview(
+        studentId: learnerId,
+        summary: const MasterySummary(total: 2, started: 1, secure: 1),
+        bySubject: const [
+          SubjectMastery(
+            subject: 'Mathematics',
+            summary: MasterySummary(total: 2, started: 1, secure: 1),
+          ),
+        ],
+        needsRevision: const [],
+      );
+
+  @override
+  Future<QuizAttempt> startQuiz({
+    required String learnerId,
+    required String topicId,
+    required bool check,
+  }) async {
+    tries = 0;
+    return QuizAttempt(
+      attemptId: 'a1',
+      isCheck: check,
+      topicId: topicId,
+      topicName: 'Number and place value',
+      subject: 'Mathematics',
+      questions: const [
+        QuizQuestion(
+          id: 'q1',
+          order: 1,
+          levelLabel: 'Foundations',
+          text: 'What is 2 + 2?',
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<AnswerOutcome> answerQuestion({
+    required String attemptId,
+    required String questionId,
+    required String answer,
+  }) async {
+    answers.add(answer);
+    tries++;
+    if (answer == 'right') {
+      return AnswerOutcome(
+        settled: true,
+        verdict: Verdict.correct,
+        feedback: 'Correct. Well done!',
+        done: true,
+        result: QuizResult(
+          percent: tries == 1 ? 100 : 60,
+          correct: 1,
+          total: 1,
+          mastery: Mastery.secure,
+          masteryBefore: Mastery.notStarted,
+          review: const [
+            ReviewItem(text: 'What is 2 + 2?', verdict: Verdict.correct),
+          ],
+          weakLevels: const [],
+          topicName: 'Number and place value',
+          subject: 'Mathematics',
+          next: const NextUnit(id: 'u2', name: 'Operations'),
+        ),
+      );
+    }
+    if (tries == 1) {
+      return const AnswerOutcome(
+        settled: false,
+        verdict: Verdict.incorrect,
+        feedback: 'Count on from two.',
+        triesLeft: 1,
+      );
+    }
+    return const AnswerOutcome(
+      settled: true,
+      verdict: Verdict.incorrect,
+      feedback: 'Not this time.',
+      correctAnswer: '4',
+      done: true,
+      result: QuizResult(
+        percent: 0,
+        correct: 0,
+        total: 1,
+        mastery: Mastery.emerging,
+        review: [
+          ReviewItem(
+            text: 'What is 2 + 2?',
+            verdict: Verdict.incorrect,
+            yourAnswer: 'wrong',
+            correctAnswer: '4',
+          ),
+        ],
+        weakLevels: ['Foundations'],
+        topicName: 'Number and place value',
+        subject: 'Mathematics',
+        askTutor: 'Can you help me understand Number and place value?',
+      ),
+    );
+  }
 
   @override
   Future<Progress> getProgress(String learnerId) async {

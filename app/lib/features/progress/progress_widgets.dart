@@ -17,6 +17,11 @@ IconData badgeIcon(String code) => switch (code) {
   'photo_homework' => Icons.photo_camera_rounded,
   'voice_question' => Icons.mic_rounded,
   'explorer' => Icons.explore_rounded,
+  'first_quiz' => Icons.quiz_rounded,
+  'perfect_quiz' => Icons.verified_rounded,
+  'quizzes_10' => Icons.school_rounded,
+  'topic_master' => Icons.workspace_premium_rounded,
+  'first_assignment' => Icons.edit_note_rounded,
   'level_5' => Icons.military_tech_rounded,
   _ => Icons.star_rounded,
 };

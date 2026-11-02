@@ -6,6 +6,7 @@ import '../../core/design/design.dart';
 import '../../core/models.dart';
 import '../auth/auth_state.dart';
 import '../chat/chat_screen.dart';
+import '../quiz/practice_screen.dart';
 
 /// A subject's topics for the learner's class, in curriculum order. Tapping a topic starts the
 /// tutor on it; the card at the top starts an open conversation.
@@ -142,6 +143,40 @@ class _SubjectScreenState extends State<SubjectScreen> {
                           Text('Ask Tutoria anything', style: TText.subheading),
                           Text(
                             'Questions, homework or a photo',
+                            style: TText.small,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: TColors.ink),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TSpace.md),
+              TCard(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PracticeScreen(
+                      learnerId: widget.learnerId,
+                      subject: widget.subject,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconBadge(
+                      icon: Icons.quiz_rounded,
+                      color: style.accent,
+                      size: 44,
+                    ),
+                    const SizedBox(width: TSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Practice and quizzes', style: TText.subheading),
+                          Text(
+                            'Test yourself and build mastery',
                             style: TText.small,
                           ),
                         ],

@@ -6,6 +6,7 @@ import '../../core/design/design.dart';
 import '../../core/progress.dart';
 import '../progress/progress_widgets.dart';
 import '../progress/rewards_screen.dart';
+import '../quiz/mastery_widgets.dart';
 import 'student_home_screen.dart' show StatCard;
 
 /// The Progress tab: how much the learner has asked, their streak and where they spend time.
@@ -86,6 +87,7 @@ class ProgressScreen extends StatelessWidget {
                   const SizedBox(height: TSpace.md),
                   TCard(child: WeekChart(week: progress.week)),
                 ],
+                MasterySection(learnerId: learnerId),
                 const SizedBox(height: TSpace.xl),
                 Row(
                   children: [

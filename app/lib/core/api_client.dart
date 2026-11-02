@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'models.dart';
 import 'progress.dart';
+import 'quiz.dart';
 import 'secure_storage.dart';
 
 class ChatCitation {
@@ -261,6 +262,103 @@ class ApiClient {
     return (_decodeBody(res) as List)
         .map((c) => ChildProgress.fromJson(c as Map<String, dynamic>))
         .toList();
+  }
+
+  // --- Practice: quizzes, quick checks, assignments and mastery
+
+  /// The practice units for a learner's class in one subject, with how they are getting on.
+  Future<PracticeList> practiceUnits({
+    required String learnerId,
+    required String subject,
+  }) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/quiz/topics', {'studentId': learnerId, 'subject': subject}),
+        headers: _json(t),
+      ),
+    );
+    return PracticeList.fromJson(await _decode(res));
+  }
+
+  /// Mastery across every subject for one learner.
+  Future<MasteryOverview> masteryOverview(String learnerId) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/quiz/overview', {'studentId': learnerId}),
+        headers: _json(t),
+      ),
+    );
+    return MasteryOverview.fromJson(
+      (_decodeBody(res) as List).first as Map<String, dynamic>,
+    );
+  }
+
+  /// Start a quiz (or the shorter quick check), or pick up the one left unfinished.
+  Future<QuizAttempt> startQuiz({
+    required String learnerId,
+    required String topicId,
+    required bool check,
+  }) async {
+    final res = await _authed(
+      (t) => _client.post(
+        _uri('/quiz/attempts'),
+        headers: _json(t),
+        body: jsonEncode({
+          'studentId': learnerId,
+          'topicId': topicId,
+          'mode': check ? 'CHECK' : 'QUIZ',
+        }),
+      ),
+    );
+    return QuizAttempt.fromJson(await _decode(res));
+  }
+
+  Future<AnswerOutcome> answerQuestion({
+    required String attemptId,
+    required String questionId,
+    required String answer,
+  }) async {
+    final res = await _authed(
+      (t) => _client.post(
+        _uri('/quiz/attempts/$attemptId/answer'),
+        headers: _json(t),
+        body: jsonEncode({'questionId': questionId, 'answer': answer}),
+      ),
+    );
+    return AnswerOutcome.fromJson(await _decode(res));
+  }
+
+  Future<AssignmentInfo> getAssignment({
+    required String learnerId,
+    required String topicId,
+  }) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/quiz/topics/$topicId/assignment', {'studentId': learnerId}),
+        headers: _json(t),
+      ),
+    );
+    return AssignmentInfo.fromJson(await _decode(res));
+  }
+
+  Future<AssignmentOutcome> submitAssignment({
+    required String learnerId,
+    required String topicId,
+    required String response,
+    String reflection = '',
+  }) async {
+    final res = await _authed(
+      (t) => _client.post(
+        _uri('/quiz/topics/$topicId/assignment'),
+        headers: _json(t),
+        body: jsonEncode({
+          'studentId': learnerId,
+          'response': response,
+          'reflection': reflection,
+        }),
+      ),
+    );
+    return AssignmentOutcome.fromJson(await _decode(res));
   }
 
   // --- Curriculum and tutoring
