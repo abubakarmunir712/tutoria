@@ -7,11 +7,18 @@ export interface Limits {
   dailyQuestionLimit: number;
   /** estimated AI spend, in USD, across everyone per day before the tutor pauses */
   dailyCostCapUsd: number;
+  /** AI-marked quiz answers and assignments one learner can have marked per day; past this
+   *  the offline check marks instead, so practice keeps working */
+  dailyMarkingLimit: number;
+  /** percent of the daily cost cap at which the admin dashboard warns */
+  costAlertPercent: number;
 }
 
 export const DEFAULT_LIMITS: Limits = {
   dailyQuestionLimit: 100,
   dailyCostCapUsd: 10,
+  dailyMarkingLimit: 150,
+  costAlertPercent: 80,
 };
 
 @Injectable()
@@ -30,6 +37,8 @@ export class SettingsService {
     return {
       dailyQuestionLimit: read('dailyQuestionLimit'),
       dailyCostCapUsd: read('dailyCostCapUsd'),
+      dailyMarkingLimit: read('dailyMarkingLimit'),
+      costAlertPercent: read('costAlertPercent'),
     };
   }
 

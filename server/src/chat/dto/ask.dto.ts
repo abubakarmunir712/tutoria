@@ -31,6 +31,11 @@ export class AskDto {
   @IsUUID()
   studentId?: string;
 
+  // Carry on a saved conversation. Without it, a new one is started (needs studentId).
+  @IsOptional()
+  @IsUUID()
+  conversationId?: string;
+
   // The topic being studied, when the question came from the topic list.
   @IsOptional()
   @IsString()

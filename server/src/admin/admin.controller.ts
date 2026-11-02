@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
@@ -33,6 +42,11 @@ export class AdminController {
   @Get('students')
   students(@Query() q: StudentsQuery) {
     return this.admin.students(q);
+  }
+
+  @Get('students/:id')
+  student(@Param('id', ParseUUIDPipe) id: string) {
+    return this.admin.student(id);
   }
 
   @Get('settings')

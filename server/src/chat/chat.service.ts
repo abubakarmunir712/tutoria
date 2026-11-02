@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsageKind } from '@prisma/client';
 import {
@@ -6,6 +10,7 @@ import {
   ProgressService,
 } from '../progress/progress.service';
 import { UsageService } from '../usage/usage.service';
+import { ConversationsService } from './conversations.service';
 import { AskDto } from './dto/ask.dto';
 import { AskImageDto } from './dto/ask-image.dto';
 
@@ -20,7 +25,11 @@ export interface AskResponse {
 }
 
 /** An answer, plus what it earned the learner when the app said who was asking. */
-export type TrackedAskResponse = AskResponse & { progress?: RecordedProgress };
+export type TrackedAskResponse = AskResponse & {
+  progress?: RecordedProgress;
+  /** The saved conversation this exchange belongs to (when the app said who was asking). */
+  conversationId?: string;
+};
 
 export interface TopicsResponse {
   grade: string;
@@ -33,12 +42,14 @@ export interface TopicsResponse {
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
   private readonly baseUrl: string;
 
   constructor(
     config: ConfigService,
     private readonly progress: ProgressService,
     private readonly usage: UsageService,
+    private readonly conversations: ConversationsService,
   ) {
     this.baseUrl = config.get('AI_SERVICE_URL', 'http://localhost:8000');
   }
@@ -83,9 +94,13 @@ export class ChatService {
   }
 
   async ask(userId: string, dto: AskDto): Promise<TrackedAskResponse> {
+    const history =
+      dto.history ??
+      (dto.studentId && dto.conversationId
+        ? await this.savedContext(userId, dto.studentId, dto.conversationId)
+        : []);
     const inputChars =
-      dto.question.length +
-      (dto.history ?? []).reduce((n, t) => n + t.content.length, 0);
+      dto.question.length + history.reduce((n, t) => n + t.content.length, 0);
     const { result, studentId } = await this.tracked(
       userId,
       dto.studentId,
@@ -93,11 +108,20 @@ export class ChatService {
       dto.subject,
       inputChars,
       (r) => r.answer.length,
-      () => this.askAi(dto),
+      () => this.askAi(dto, history),
     );
     if (!studentId) return result;
+    const conversationId = await this.save(studentId, {
+      conversationId: dto.conversationId,
+      subject: dto.subject ?? 'General',
+      grade: dto.grade,
+      topic: dto.topic,
+      question: dto.question,
+      result,
+    });
     return {
       ...result,
+      conversationId,
       progress: await this.progress.record(studentId, {
         kind: dto.via === 'voice' ? 'VOICE' : 'QUESTION',
         subject: dto.subject ?? 'General',
@@ -106,7 +130,45 @@ export class ChatService {
     };
   }
 
-  private async askAi(dto: AskDto): Promise<AskResponse> {
+  /** Earlier turns of a saved conversation, when the app did not send its own. */
+  private async savedContext(
+    userId: string,
+    studentId: string,
+    conversationId: string,
+  ) {
+    const owned = await this.progress.requireOwned(userId, studentId);
+    return this.conversations.context(owned, conversationId);
+  }
+
+  /** Keep the exchange. A failure here must never lose the learner the answer they waited for. */
+  private async save(
+    studentId: string,
+    input: {
+      conversationId?: string;
+      subject: string;
+      grade?: string;
+      topic?: string;
+      question: string;
+      hasImage?: boolean;
+      result: AskResponse;
+    },
+  ): Promise<string | undefined> {
+    try {
+      return await this.conversations.saveExchange(studentId, {
+        ...input,
+        answer: input.result.answer,
+        citations: input.result.citations,
+      });
+    } catch (e) {
+      this.logger.warn(`Could not save the conversation: ${String(e)}`);
+      return undefined;
+    }
+  }
+
+  private async askAi(
+    dto: AskDto,
+    history: Array<{ role: string; content: string }>,
+  ): Promise<AskResponse> {
     const res = await fetch(`${this.baseUrl}/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -115,7 +177,7 @@ export class ChatService {
         grade: dto.grade,
         subject: dto.subject,
         top_k: dto.topK ?? 3,
-        history: dto.history ?? [],
+        history,
       }),
     });
     return this.handle(res);
@@ -126,18 +188,37 @@ export class ChatService {
     dto: AskImageDto,
     file: Express.Multer.File,
   ): Promise<TrackedAskResponse> {
+    let history = dto.history;
+    if (!history && dto.studentId && dto.conversationId) {
+      const turns = await this.savedContext(
+        userId,
+        dto.studentId,
+        dto.conversationId,
+      );
+      if (turns.length) history = JSON.stringify(turns);
+    }
     const { result, studentId } = await this.tracked(
       userId,
       dto.studentId,
       'ASK_IMAGE',
       dto.subject,
-      (dto.history ?? '').length + 300,
+      (history ?? '').length + 300,
       (r) => r.answer.length,
-      () => this.askImageAi(dto, file),
+      () => this.askImageAi(dto, file, history),
     );
     if (!studentId) return result;
+    const conversationId = await this.save(studentId, {
+      conversationId: dto.conversationId,
+      subject: dto.subject ?? 'General',
+      grade: dto.grade,
+      topic: dto.topic,
+      question: '',
+      hasImage: true,
+      result,
+    });
     return {
       ...result,
+      conversationId,
       progress: await this.progress.record(studentId, {
         kind: 'PHOTO',
         subject: dto.subject ?? 'General',
@@ -149,6 +230,7 @@ export class ChatService {
   private async askImageAi(
     dto: AskImageDto,
     file: Express.Multer.File,
+    history?: string,
   ): Promise<AskResponse> {
     const form = new FormData();
     form.append(
@@ -159,7 +241,7 @@ export class ChatService {
     if (dto.grade) form.append('grade', dto.grade);
     if (dto.subject) form.append('subject', dto.subject);
     form.append('top_k', String(dto.topK ?? 3));
-    if (dto.history) form.append('history', dto.history);
+    if (history) form.append('history', history);
 
     const res = await fetch(`${this.baseUrl}/ask-image`, {
       method: 'POST',

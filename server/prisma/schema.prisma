@@ -61,18 +61,21 @@ model Student {
   // The profile picture lives on disk (UPLOADS_DIR/students/<id>); these only say it exists.
   photoMime      String?
   photoUpdatedAt DateTime?
+  // Left off the class leaderboard (the learner or their parent chose this).
+  hideFromLeaderboard Boolean @default(false)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments  Enrollment[]
-  stats        StudentStats?
-  events       LearningEvent[]
-  badges       StudentBadge[]
-  usage        UsageLog[]
-  quizAttempts QuizAttempt[]
-  mastery      TopicMastery[]
-  submissions  AssignmentSubmission[]
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments   Enrollment[]
+  stats         StudentStats?
+  events        LearningEvent[]
+  badges        StudentBadge[]
+  usage         UsageLog[]
+  quizAttempts  QuizAttempt[]
+  mastery       TopicMastery[]
+  submissions   AssignmentSubmission[]
+  conversations Conversation[]
 
   @@index([userId])
 }
@@ -368,4 +371,46 @@ model AssignmentSubmission {
   topic   QuizTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([studentId, topicId])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Tutor chat history, so a learner can come back to a conversation and carry on.
+// ---------------------------------------------------------------------------------------------
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  studentId     String
+  subject       String
+  grade         String?
+  topic         String?
+  // The first thing the learner asked, trimmed: what the history list shows.
+  title         String
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+
+  student  Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([studentId, lastMessageAt])
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           ChatRole
+  content        String
+  // A homework photo was sent with this message (the photo itself is not kept).
+  hasImage       Boolean  @default(false)
+  // Curriculum references that came with a tutor answer, as the app shows them.
+  citations      Json?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

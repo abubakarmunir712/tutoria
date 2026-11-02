@@ -52,4 +52,18 @@ export class UpdateLimitsDto {
   @Min(0)
   @Max(100000)
   dailyCostCapUsd?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(10000)
+  dailyMarkingLimit?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  costAlertPercent?: number;
 }

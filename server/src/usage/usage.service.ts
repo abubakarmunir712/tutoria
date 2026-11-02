@@ -58,6 +58,23 @@ export class UsageService {
         }
       }
 
+      if (studentId && limits.dailyMarkingLimit > 0 && kind === 'GRADE') {
+        const marked = await this.prisma.usageLog.count({
+          where: {
+            studentId,
+            ok: true,
+            kind: 'GRADE',
+            createdAt: { gte: since },
+          },
+        });
+        if (marked >= limits.dailyMarkingLimit) {
+          throw new HttpException(
+            'Marking limit reached for today.',
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
+      }
+
       if (limits.dailyCostCapUsd > 0) {
         const spent = await this.prisma.usageLog.aggregate({
           where: { createdAt: { gte: since } },

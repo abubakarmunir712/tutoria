@@ -188,13 +188,25 @@ export class QuizService implements OnModuleInit {
     name: string;
     grade: string;
   }) {
-    const [units, mastery] = await Promise.all([
+    const [units, mastery, open] = await Promise.all([
       this.prisma.quizTopic.findMany({
         where: { grade: student.grade as never },
         orderBy: [{ subject: 'asc' }, { order: 'asc' }],
         select: { id: true, subject: true, name: true, order: true },
       }),
       this.prisma.topicMastery.findMany({ where: { studentId: student.id } }),
+      this.prisma.quizAttempt.findFirst({
+        where: {
+          studentId: student.id,
+          finishedAt: null,
+          startedAt: { gte: new Date(Date.now() - RESUME_WITHIN_MS) },
+        },
+        orderBy: { startedAt: 'desc' },
+        include: {
+          topic: { select: { id: true, name: true, subject: true } },
+          answers: { where: { settled: true }, select: { id: true } },
+        },
+      }),
     ]);
     const masteryOf = new Map(mastery.map((m) => [m.topicId, m]));
     const subjects = new Map<string, typeof units>();
@@ -241,6 +253,19 @@ export class QuizService implements OnModuleInit {
       ...totals,
       bySubject,
       needsRevision,
+      // A quiz or quick check left half done, for "carry on" on the home screen.
+      unfinished: open
+        ? {
+            attemptId: open.id,
+            topicId: open.topic.id,
+            topicName: open.topic.name,
+            subject: open.topic.subject,
+            mode: open.mode,
+            answered: open.answers.length,
+            total: open.mode === 'CHECK' ? CHECK_QUESTIONS : 5,
+            startedAt: open.startedAt,
+          }
+        : null,
     };
   }
 

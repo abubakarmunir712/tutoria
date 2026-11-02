@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { publicName, rankBoard, weekStart } from './leaderboard';
 import {
   ASK_KINDS,
   BADGES,
@@ -277,6 +278,74 @@ export class ProgressService {
         earnedAt: earnedAt.get(b.code) ?? null,
       })),
     };
+  }
+
+  /**
+   * This week's XP board for the learner's class (everyone in the same grade). Learners who
+   * opted out are left off, and only a first name and initial are shown.
+   */
+  async leaderboard(userId: string, studentId: string, now = new Date()) {
+    await this.requireOwned(userId, studentId);
+    const me = await this.prisma.student.findUniqueOrThrow({
+      where: { id: studentId },
+      select: { grade: true, hideFromLeaderboard: true },
+    });
+    const since = weekStart(now);
+    if (!me.grade) {
+      return {
+        week: since,
+        hidden: me.hideFromLeaderboard,
+        top: [],
+        you: null,
+      };
+    }
+    const sums = await this.prisma.learningEvent.groupBy({
+      by: ['studentId'],
+      where: {
+        createdAt: { gte: since },
+        student: { grade: me.grade, hideFromLeaderboard: false },
+      },
+      _sum: { xp: true },
+    });
+    const names = await this.prisma.student.findMany({
+      where: { id: { in: sums.map((s) => s.studentId) } },
+      select: { id: true, name: true },
+    });
+    const nameOf = new Map(names.map((n) => [n.id, n.name]));
+    const entries = sums
+      .filter((s) => (s._sum.xp ?? 0) > 0)
+      .map((s) => ({
+        studentId: s.studentId,
+        name: publicName(nameOf.get(s.studentId) ?? ''),
+        xp: s._sum.xp ?? 0,
+      }));
+    const { top, you } = rankBoard(entries, studentId);
+    // Never send other children's ids to the app: only rank, name and XP.
+    const shape = (r: (typeof top)[number]) => ({
+      rank: r.rank,
+      name: r.name,
+      xp: r.xp,
+      isYou: r.isYou,
+    });
+    return {
+      week: since,
+      hidden: me.hideFromLeaderboard,
+      top: top.map(shape),
+      you: you ? shape(you) : null,
+    };
+  }
+
+  async setLeaderboardVisible(
+    userId: string,
+    studentId: string,
+    visible: boolean,
+  ) {
+    await this.requireOwned(userId, studentId);
+    await this.prisma.student.update({
+      where: { id: studentId },
+      data: { hideFromLeaderboard: !visible },
+    });
+    return { hidden: !visible };
   }
 
   async summaryFor(userId: string, studentId: string) {

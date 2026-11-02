@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { levelForXp, utcDayKey } from '../progress/gamification';
 import { PrismaService } from '../prisma/prisma.service';
 import { Limits, SettingsService } from '../usage/settings.service';
+import { costAlerts } from '../usage/alerts';
 import { startOfUtcDay } from '../usage/usage.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -62,6 +63,10 @@ export class AdminService {
       xpTotal,
       recent,
       limits,
+      quizzes7d,
+      quizzesToday,
+      masteredUnits,
+      earlierSpend,
     ] = await Promise.all([
       this.prisma.user.count({ where: { role: 'PARENT', isAdmin: false } }),
       this.prisma.student.count(),
@@ -91,7 +96,27 @@ export class AdminService {
         },
       }),
       this.settings.limits(),
+      this.prisma.quizAttempt.aggregate({
+        where: { mode: 'QUIZ', finishedAt: { gte: week } },
+        _count: { _all: true },
+        _avg: { score: true },
+      }),
+      this.prisma.quizAttempt.count({
+        where: { mode: 'QUIZ', finishedAt: { gte: today } },
+      }),
+      this.prisma.topicMastery.count({ where: { state: 'MASTERED' } }),
+      // The seven days before today, to tell a spike from a normal day.
+      this.spendBetween(new Date(today.getTime() - 7 * DAY_MS), today),
     ]);
+
+    const alerts = costAlerts({
+      costToday: usageToday.cost,
+      capUsd: limits.dailyCostCapUsd,
+      alertPercent: limits.costAlertPercent,
+      dailyAverageBefore: earlierSpend / 7,
+      callsToday: usageToday.calls,
+      errorsToday,
+    });
 
     return {
       generatedAt: now,
@@ -102,6 +127,13 @@ export class AdminService {
         last30Days: active30d,
       },
       questions: { today: questionsToday, last7Days: questions7d },
+      quizzes: {
+        today: quizzesToday,
+        last7Days: quizzes7d._count._all,
+        averageScore7Days: quizzes7d._avg.score ?? null,
+        masteredUnits,
+      },
+      alerts,
       xpAwarded: xpTotal._sum.xp ?? 0,
       cost: {
         today: usageToday.cost,
@@ -373,6 +405,117 @@ export class AdminService {
       _count: { _all: true },
     });
     return { cost: r._sum.costUsd ?? 0, calls: r._count._all };
+  }
+
+  private async spendBetween(from: Date, to: Date) {
+    const r = await this.prisma.usageLog.aggregate({
+      where: { createdAt: { gte: from, lt: to } },
+      _sum: { costUsd: true },
+    });
+    return r._sum.costUsd ?? 0;
+  }
+
+  /** One learner in depth: profile, progress, mastery by unit and recent practice. */
+  async student(id: string) {
+    const s = await this.prisma.student.findUnique({
+      where: { id },
+      include: {
+        user: { select: { fullName: true, email: true, role: true } },
+        stats: true,
+        badges: { orderBy: { earnedAt: 'desc' } },
+        enrollments: { include: { subject: { select: { name: true } } } },
+      },
+    });
+    if (!s) throw new NotFoundException('Learner not found');
+    const [mastery, attempts, submissions, conversations, usage] =
+      await Promise.all([
+        this.prisma.topicMastery.findMany({
+          where: { studentId: id },
+          include: {
+            topic: { select: { name: true, subject: true, code: true } },
+          },
+          orderBy: { lastAttemptAt: 'desc' },
+        }),
+        this.prisma.quizAttempt.findMany({
+          where: { studentId: id, finishedAt: { not: null } },
+          orderBy: { finishedAt: 'desc' },
+          take: 15,
+          include: { topic: { select: { name: true, subject: true } } },
+        }),
+        this.prisma.assignmentSubmission.findMany({
+          where: { studentId: id },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        }),
+        // Only how many: what a child said to the tutor is theirs and their parent's.
+        this.prisma.conversation.count({ where: { studentId: id } }),
+        this.prisma.usageLog.aggregate({
+          where: {
+            studentId: id,
+            createdAt: { gte: windowStart(new Date(), 30) },
+          },
+          _sum: { costUsd: true },
+          _count: { _all: true },
+        }),
+      ]);
+    const taskTopics = new Map(
+      (
+        await this.prisma.quizTopic.findMany({
+          where: { id: { in: submissions.map((a) => a.topicId) } },
+          select: { id: true, name: true, subject: true },
+        })
+      ).map((t) => [t.id, t]),
+    );
+    return {
+      id: s.id,
+      name: s.name,
+      grade: s.grade,
+      joinedAt: s.createdAt,
+      account: s.user.fullName,
+      email: s.user.email,
+      selfSignedUp: s.user.role === 'STUDENT',
+      subjects: s.enrollments.map((e) => e.subject.name),
+      hiddenFromLeaderboard: s.hideFromLeaderboard,
+      stats: {
+        xp: s.stats?.xp ?? 0,
+        level: levelForXp(s.stats?.xp ?? 0),
+        streak: s.stats?.streak ?? 0,
+        bestStreak: s.stats?.bestStreak ?? 0,
+        questions: s.stats?.questions ?? 0,
+        quizzes: s.stats?.quizzes ?? 0,
+        assignments: s.stats?.assignments ?? 0,
+        masteredTopics: s.stats?.masteredTopics ?? 0,
+        lastActiveAt: s.stats?.lastActiveAt ?? null,
+      },
+      badges: s.badges.map((b) => ({ code: b.code, earnedAt: b.earnedAt })),
+      conversations,
+      aiCalls30Days: usage._count._all,
+      cost30Days: usage._sum.costUsd ?? 0,
+      mastery: mastery.map((m) => ({
+        topic: m.topic.name,
+        subject: m.topic.subject,
+        code: m.topic.code,
+        state: m.state,
+        attempts: m.attempts,
+        bestScore: m.bestScore,
+        lastScore: m.lastScore,
+        lastAttemptAt: m.lastAttemptAt,
+      })),
+      attempts: attempts.map((a) => ({
+        id: a.id,
+        topic: a.topic.name,
+        subject: a.topic.subject,
+        mode: a.mode,
+        score: a.score,
+        finishedAt: a.finishedAt,
+      })),
+      assignments: submissions.map((a) => ({
+        topic: taskTopics.get(a.topicId)?.name ?? '',
+        subject: taskTopics.get(a.topicId)?.subject ?? '',
+        verdict: a.verdict,
+        at: a.createdAt,
+      })),
+    };
   }
 
   private async costPerSession(since: Date) {

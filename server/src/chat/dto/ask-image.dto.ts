@@ -23,6 +23,10 @@ export class AskImageDto {
   studentId?: string;
 
   @IsOptional()
+  @IsUUID()
+  conversationId?: string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(120)
   topic?: string;
