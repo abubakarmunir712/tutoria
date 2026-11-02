@@ -51,4 +51,4 @@ This is the real milestone plan; `PRD.md` §5 was rewritten to match it, with th
 - Confirm which 1–2 subjects to prioritize for full ingestion beyond the initial test slice.
 - Confirm SHS PDF links follow the same direct-link pattern as B4–B6/B7–B9 (not yet verified).
 - Confirm whether leaderboards are in scope.
-- Confirm which milestone owns Quizzes/Assessments, Assignments, Diagnostics + Remediation, and Progression Tracking — not mentioned by name in this weeks-based plan (see `PRD.md` §5 note).
+- Confirm that Quizzes/Assessments, Assignments, Diagnostics + Remediation and Progression Tracking sit in Milestone 3 — built there, but not named in this weeks-based plan (see `PRD.md` §5 note and `QUIZ_PLAN.md`).

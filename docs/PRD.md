@@ -155,9 +155,15 @@ This is the client-facing, weeks-based breakdown (see [`PROJECT_BRIEF.md`](PROJE
 
 ---
 
-### ⚠️ Unplaced from Section 3's functional requirements
+### Quizzes, Assignments, Diagnostics + Remediation, and Progression Tracking — built in M3
 
-**Quizzes/Assessments, Assignments, Diagnostics + Remediation, and Progression Tracking** (Section 3, items 5–8) aren't explicitly placed in the weeks-based milestone plan above — the client-facing brief doesn't mention them by milestone. They most naturally extend M2 (learning loop) or M3 (dashboard needs progression data to show), but **this needs Joel/team confirmation** rather than a guess baked into the plan silently. Tracked in Open Items below.
+Section 3, items 5–8 aren't named in the client's weeks-based plan. They were built as part of **Milestone 3** (XP is meant to be tied to quiz/assignment completion, and the dashboards need progression data). **Still to be confirmed with Joel** that this is the milestone he expects. Design and rules: [`QUIZ_PLAN.md`](QUIZ_PLAN.md); content comes from the consultant's knowledge base (`docs/sources/production-knowledge-base.xlsx`, sheets 4–7).
+
+- [x] Quizzes (5 questions per unit, easy → transfer) with AI marking, one retry with a nudge, and answer reveal
+- [x] Diagnostics ("quick check", 3 questions) with remediation guidance
+- [x] Assignments (task, success criteria, reflection) marked against the criteria
+- [x] Progression tracking: per-unit mastery (Not started → Emerging → Developing → Secure → Mastered, Needs revision)
+- [x] XP for quizzes/assignments (replays pay only improvement), new badges, admin "Learning" page
 
 ---
 
@@ -169,7 +175,7 @@ This is the client-facing, weeks-based breakdown (see [`PROJECT_BRIEF.md`](PROJE
 - [ ] Confirm which 1–2 subjects Joel wants prioritized for full build beyond the M1 test slice — blocks start of M2 full ingestion
 - [ ] Confirm whether SHS curriculum PDFs follow the same direct-link pattern as B4–B6/B7–B9 (not yet verified)
 - [ ] Confirm if leaderboards are in scope for M4 or explicitly out
-- [ ] Confirm which milestone owns Quizzes/Assessments, Assignments, Diagnostics + Remediation, and Progression Tracking (Section 3, items 5–8) — not placed in the weeks-based roadmap (Section 5)
+- [ ] Confirm with Joel that Quizzes/Assessments, Assignments, Diagnostics + Remediation and Progression Tracking (Section 3, items 5–8) belong in Milestone 3 (built there; not named in the weeks-based roadmap)
 
 ---
 
@@ -181,3 +187,4 @@ This is the client-facing, weeks-based breakdown (see [`PROJECT_BRIEF.md`](PROJE
 - 2026-10-07 — App redesigned to the approved screen designs (see [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)). Decision: parent accounts are in scope — a parent signs up, adds children (class, school type, subjects) and each child has their own tutor; a student can also sign up alone. Subscription plans, progress/badges/streaks, the parent dashboard's stats and notifications stay with Milestones 3 and 4 (the features behind them don't exist yet).
 - 2026-10-07 — Curriculum indexed for all 15 subject/phase sources (1,902 indicators); homework-photo flow (camera, confidence check, confirm-before-tutoring) and every-turn grounding in place; topic list per subject served from the indexed curriculum.
 - 2026-10-16 — Voice added (speech-to-text and text-to-speech via Gemini, behind a swappable provider interface): ask by microphone, hear any tutor reply. App redesigned again to the new designs from the client (splash, welcome, learner dashboard): five tabs (Home, Learn, Ask, Progress, Profile). "Continue learning", the questions-asked count and the learning streak are real but local to the phone until progress is tracked on the server in Milestone 3; no placeholder numbers are shown.
+- 2026-11-02 — Practice added: quizzes, quick checks (diagnostics), assignments and per-unit mastery, from the consultant's knowledge base (450 units, 2,250 questions; see [QUIZ_PLAN.md](QUIZ_PLAN.md)). Marked by the AI service (`POST /grade`) with an exact-match shortcut and an offline keyword fallback. Quiz XP pays on first finish and on improvement only. Data caveat: the pack's content is templated (329 distinct questions of 2,250) and some reference answers are guidance rather than answers, so marking leans on the AI; an SME pass is still needed. The server loads the bank on first start (`npm run quiz:seed` to reload); rebuild the JSON with `python3 scripts/build_quiz_bank.py`.
