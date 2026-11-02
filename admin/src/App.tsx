@@ -1,7 +1,8 @@
-import { ChartColumn, Gauge, GraduationCap, House, LogOut } from "lucide-react"
+import { BookOpenCheck, ChartColumn, Gauge, GraduationCap, House, LogOut } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { getOverview, hasSession, setSignedOutHandler, signOut } from "@/lib/api"
+import { LearningPage } from "@/pages/LearningPage"
 import { LearnersPage } from "@/pages/LearnersPage"
 import { LimitsPage } from "@/pages/LimitsPage"
 import { LoginPage } from "@/pages/LoginPage"
@@ -11,6 +12,7 @@ import { UsagePage } from "@/pages/UsagePage"
 const TABS = [
   { id: "overview", label: "Overview", icon: House, title: "Welcome back" },
   { id: "usage", label: "Usage and cost", icon: ChartColumn, title: "Usage and cost" },
+  { id: "learning", label: "Learning", icon: BookOpenCheck, title: "Learning" },
   { id: "learners", label: "Learners", icon: GraduationCap, title: "Learners" },
   { id: "limits", label: "Rate limits", icon: Gauge, title: "Rate limits" },
 ] as const
@@ -89,6 +91,7 @@ export function App() {
           </div>
           {tab === "overview" && <OverviewPage />}
           {tab === "usage" && <UsagePage />}
+          {tab === "learning" && <LearningPage />}
           {tab === "learners" && <LearnersPage />}
           {tab === "limits" && <LimitsPage />}
         </main>

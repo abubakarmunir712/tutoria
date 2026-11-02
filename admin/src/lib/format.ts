@@ -43,4 +43,16 @@ export const KIND_LABEL: Record<string, string> = {
   ASK_IMAGE: "Homework photo",
   TRANSCRIBE: "Speech to text",
   SPEAK: "Text to speech",
+  QUIZ: "Quiz",
+  CHECK: "Quick check",
+  ASSIGNMENT: "Assignment",
+  GRADE: "Marking",
+}
+
+export const MASTERY_LABEL: Record<string, string> = {
+  EMERGING: "Emerging",
+  DEVELOPING: "Developing",
+  SECURE: "Secure",
+  MASTERED: "Mastered",
+  NEEDS_REVISION: "Needs revision",
 }

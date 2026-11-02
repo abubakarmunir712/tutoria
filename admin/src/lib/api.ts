@@ -163,6 +163,15 @@ export interface Usage {
   byHour: { hour: number; questions: number }[]
 }
 
+export interface Learning {
+  days: number
+  totals: { quizzes: number; checks: number; learners: number; averageScore: number; assignments: number }
+  daily: { day: string; quizzes: number; avg: number }[]
+  bySubject: { subject: string; quizzes: number; avg: number }[]
+  hardest: { name: string; subject: string; grade: string; quizzes: number; avg: number }[]
+  mastery: { state: string; units: number }[]
+}
+
 export interface LearnerRow {
   id: string
   name: string
@@ -187,6 +196,7 @@ export interface Limits {
 
 export const getOverview = () => request<Overview>("/admin/overview")
 export const getUsage = (days: number) => request<Usage>(`/admin/usage?days=${days}`)
+export const getLearning = (days: number) => request<Learning>(`/admin/learning?days=${days}`)
 export const getLearners = (search: string, skip: number, take: number) =>
   request<{ total: number; students: LearnerRow[] }>(
     `/admin/students?take=${take}&skip=${skip}${search ? `&search=${encodeURIComponent(search)}` : ""}`
