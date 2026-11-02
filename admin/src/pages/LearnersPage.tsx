@@ -7,6 +7,7 @@ import { Card, Empty, ErrorNote } from "@/components/ui-bits"
 import { ago, gradeLabel, num, usd } from "@/lib/format"
 import { getLearners } from "@/lib/api"
 import { usePoll } from "@/lib/use-poll"
+import { LearnerPanel } from "./LearnerPanel"
 
 const PAGE = 25
 
@@ -14,6 +15,7 @@ export function LearnersPage() {
   const [search, setSearch] = useState("")
   const [term, setTerm] = useState("")
   const [page, setPage] = useState(0)
+  const [open, setOpen] = useState<string | null>(null)
 
   // Wait for a pause in typing before searching.
   useEffect(() => {
@@ -62,9 +64,17 @@ export function LearnersPage() {
               </thead>
               <tbody className="divide-y tabular-nums">
                 {data.students.map((s) => (
-                  <tr key={s.id}>
+                  <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setOpen(s.id)}>
                     <td className="py-2 pr-3">
-                      <div className="font-extrabold text-[var(--ink)]">{s.name}</div>
+                      <button
+                        className="text-left font-extrabold text-[var(--ink)] hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpen(s.id)
+                        }}
+                      >
+                        {s.name}
+                      </button>
                       <div className="text-xs text-muted-foreground">{gradeLabel(s.grade)}</div>
                     </td>
                     <td className="py-2 pr-3">
@@ -84,6 +94,7 @@ export function LearnersPage() {
           </div>
         )}
       </Card>
+      {open && <LearnerPanel id={open} onClose={() => setOpen(null)} />}
       {data && data.total > PAGE && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>

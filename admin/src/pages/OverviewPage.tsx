@@ -1,4 +1,4 @@
-import { Bot, Camera, Coins, Flame, GraduationCap, MessageCircle, Mic, Star, Target, TriangleAlert, type LucideIcon } from "lucide-react"
+import { Award, Bot, Camera, Coins, Flame, GraduationCap, ListChecks, MessageCircle, Mic, Star, Target, TriangleAlert, type LucideIcon } from "lucide-react"
 
 import { Card, Empty, ErrorNote, Stat } from "@/components/ui-bits"
 import { ago, gradeLabel, KIND_LABEL, num, usd } from "@/lib/format"
@@ -15,11 +15,27 @@ export function OverviewPage() {
     return error ? <ErrorNote message={error} onRetry={reload} /> : <Empty>{loading ? "Loading…" : ""}</Empty>
   }
   const pct = data.limits.costTodayPercent
-  const nearCap = pct !== null && pct >= 80
+  const nearCap = pct !== null && pct >= data.limits.costAlertPercent
 
   return (
     <div className="space-y-4">
       {error && <ErrorNote message={`Showing the last numbers we got. ${error}`} onRetry={reload} />}
+      {data.alerts.length > 0 && (
+        <ul className="space-y-2" aria-label="Alerts">
+          {data.alerts.map((a) => (
+            <li
+              key={a.id}
+              role="alert"
+              className={`rounded-3xl p-4 text-sm ${a.level === "critical" ? "bg-[#ffe0e0] text-[#8a1010]" : "bg-[#fff1cf] text-[#7a4b00]"}`}
+            >
+              <div className="flex items-center gap-2 font-extrabold">
+                <TriangleAlert className="size-4" /> {a.title}
+              </div>
+              <div className="mt-0.5">{a.detail}</div>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat icon={Flame} accent="orange" label="Active learners today" value={num(data.active.today)} hint={`${num(data.active.last7Days)} this week · ${num(data.active.last30Days)} this month`} />
         <Stat icon={MessageCircle} accent="blue" label="Questions today" value={num(data.questions.today)} hint={`${num(data.questions.last7Days)} in the last 7 days`} />
@@ -48,6 +64,16 @@ export function OverviewPage() {
           tone={data.cost.errorsToday > 0 ? "bad" : "default"}
         />
         <Stat icon={Star} accent="yellow" label="XP awarded, all time" value={num(data.xpAwarded)} />
+        <Stat
+          icon={ListChecks} accent="pink" label="Quizzes finished today"
+          value={num(data.quizzes.today)}
+          hint={`${num(data.quizzes.last7Days)} this week`}
+        />
+        <Stat
+          icon={GraduationCap} accent="green" label="Average quiz score (7 days)"
+          value={data.quizzes.averageScore7Days === null ? "–" : `${Math.round(data.quizzes.averageScore7Days * 100)}%`}
+        />
+        <Stat icon={Award} accent="purple" label="Topics mastered" value={num(data.quizzes.masteredUnits)} hint="across all learners" />
       </div>
 
       <h2 className="pt-2 text-2xl">Happening now</h2>

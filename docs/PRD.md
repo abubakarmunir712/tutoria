@@ -129,17 +129,21 @@ This is the client-facing, weeks-based breakdown (see [`PROJECT_BRIEF.md`](PROJE
 ### MILESTONE 3 — Gamification and Dashboard — Weeks 6–7
 **Goal:** Add the engagement layer and complete the student + admin dashboards.
 
-- [ ] **1. Gamification**
-  - [ ] XP system tied to quiz/assignment completion, with backend persistence
-  - [ ] Streaks
-  - [ ] Rewards screen
-  - [ ] (Badges/leaderboards — confirm with Joel if in scope, see Open Items)
-- [ ] **2. Complete student dashboard** — builds on the M1 scaffold: "continue where you left off," subject/grade navigation, progress view
-- [ ] **3. Admin & telemetry dashboard** (`admin/` already scaffolded)
-  - [ ] Real-time visibility into student engagement
-  - [ ] API cost per session tracking
-  - [ ] Usage pattern analytics
-  - [ ] Rate-limiting controls to guard against API cost spikes
+- [x] **1. Gamification**
+  - [x] XP system tied to quiz/assignment completion, with backend persistence
+  - [x] Streaks
+  - [x] Rewards screen
+  - [x] Badges (13) and a weekly class leaderboard (first name + initial, opt-out) — built; **still to confirm with Joel** that leaderboards are in scope, see Open Items
+  - [x] Tutor chat history saved on the server so a learner can reopen a conversation and carry on
+  - [x] Resume a half-done quiz from Home
+- [x] **2. Complete student dashboard** — builds on the M1 scaffold: "continue where you left off," subject/grade navigation, progress view
+- [x] **3. Admin & telemetry dashboard** (`admin/` already scaffolded)
+  - [x] Real-time visibility into student engagement
+  - [x] API cost per session tracking
+  - [x] Usage pattern analytics
+  - [x] Rate-limiting controls to guard against API cost spikes (questions per learner, AI-marked answers per learner, daily spend cap)
+  - [x] Cost alerts on the Overview tab (near the cap, cap reached, spend spike, failing AI calls)
+  - [x] Quiz figures on Overview and a per-learner detail panel (mastery, recent quizzes, assignments, badges)
 
 ---
 
@@ -174,7 +178,7 @@ Section 3, items 5–8 aren't named in the client's weeks-based plan. They were 
 - [ ] Curriculum accuracy/SME sign-off pass (separate from code verification) — needed before any "exam-safe" claim, ongoing across M1–M3 as more subjects are ingested
 - [ ] Confirm which 1–2 subjects Joel wants prioritized for full build beyond the M1 test slice — blocks start of M2 full ingestion
 - [ ] Confirm whether SHS curriculum PDFs follow the same direct-link pattern as B4–B6/B7–B9 (not yet verified)
-- [ ] Confirm if leaderboards are in scope for M4 or explicitly out
+- [ ] Confirm leaderboards are wanted (built in M3 as a weekly class board with first name + initial and an opt-out; remove or keep per Joel)
 - [ ] Confirm with Joel that Quizzes/Assessments, Assignments, Diagnostics + Remediation and Progression Tracking (Section 3, items 5–8) belong in Milestone 3 (built there; not named in the weeks-based roadmap)
 
 ---
@@ -188,3 +192,4 @@ Section 3, items 5–8 aren't named in the client's weeks-based plan. They were 
 - 2026-10-07 — Curriculum indexed for all 15 subject/phase sources (1,902 indicators); homework-photo flow (camera, confidence check, confirm-before-tutoring) and every-turn grounding in place; topic list per subject served from the indexed curriculum.
 - 2026-10-16 — Voice added (speech-to-text and text-to-speech via Gemini, behind a swappable provider interface): ask by microphone, hear any tutor reply. App redesigned again to the new designs from the client (splash, welcome, learner dashboard): five tabs (Home, Learn, Ask, Progress, Profile). "Continue learning", the questions-asked count and the learning streak are real but local to the phone until progress is tracked on the server in Milestone 3; no placeholder numbers are shown.
 - 2026-11-02 — Practice added: quizzes, quick checks (diagnostics), assignments and per-unit mastery, from the consultant's knowledge base (450 units, 2,250 questions; see [QUIZ_PLAN.md](QUIZ_PLAN.md)). Marked by the AI service (`POST /grade`) with an exact-match shortcut and an offline keyword fallback. Quiz XP pays on first finish and on improvement only. Data caveat: the pack's content is templated (329 distinct questions of 2,250) and some reference answers are guidance rather than answers, so marking leans on the AI; an SME pass is still needed. The server loads the bank on first start (`npm run quiz:seed` to reload); rebuild the JSON with `python3 scripts/build_quiz_bank.py`.
+- 2026-11-02 — Milestone 3 gaps closed: tutor conversations are now saved on the server (list, reopen, carry on, delete; photos are noted but not stored), a half-done quiz can be resumed from Home, a weekly class leaderboard, a per-learner AI-marking limit, cost alerts, quiz figures on the admin Overview and a learner detail panel. Open: confirm leaderboards with Joel.

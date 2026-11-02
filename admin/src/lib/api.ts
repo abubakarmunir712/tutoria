@@ -123,11 +123,20 @@ export function signOut() {
 
 // --- Shapes returned by /admin/*
 
+export interface Alert {
+  id: "cap-reached" | "near-cap" | "spike" | "failures"
+  level: "critical" | "warning"
+  title: string
+  detail: string
+}
+
 export interface Overview {
   generatedAt: string
   people: { parents: number; learners: number }
   active: { today: number; last7Days: number; last30Days: number }
   questions: { today: number; last7Days: number }
+  quizzes: { today: number; last7Days: number; averageScore7Days: number | null; masteredUnits: number }
+  alerts: Alert[]
   xpAwarded: number
   cost: {
     today: number
@@ -140,6 +149,8 @@ export interface Overview {
   limits: {
     dailyQuestionLimit: number
     dailyCostCapUsd: number
+    dailyMarkingLimit: number
+    costAlertPercent: number
     costTodayPercent: number | null
   }
   recent: {
@@ -192,6 +203,47 @@ export interface LearnerRow {
 export interface Limits {
   dailyQuestionLimit: number
   dailyCostCapUsd: number
+  dailyMarkingLimit: number
+  costAlertPercent: number
+}
+
+export interface LearnerDetail {
+  id: string
+  name: string
+  grade: string | null
+  joinedAt: string
+  account: string
+  email: string
+  selfSignedUp: boolean
+  subjects: string[]
+  hiddenFromLeaderboard: boolean
+  stats: {
+    xp: number
+    level: number
+    streak: number
+    bestStreak: number
+    questions: number
+    quizzes: number
+    assignments: number
+    masteredTopics: number
+    lastActiveAt: string | null
+  }
+  badges: { code: string; earnedAt: string }[]
+  conversations: number
+  aiCalls30Days: number
+  cost30Days: number
+  mastery: {
+    topic: string
+    subject: string
+    code: string
+    state: string
+    attempts: number
+    bestScore: number
+    lastScore: number
+    lastAttemptAt: string
+  }[]
+  attempts: { id: string; topic: string; subject: string; mode: "QUIZ" | "CHECK"; score: number | null; finishedAt: string }[]
+  assignments: { topic: string; subject: string; verdict: string; at: string }[]
 }
 
 export const getOverview = () => request<Overview>("/admin/overview")
@@ -201,6 +253,7 @@ export const getLearners = (search: string, skip: number, take: number) =>
   request<{ total: number; students: LearnerRow[] }>(
     `/admin/students?take=${take}&skip=${skip}${search ? `&search=${encodeURIComponent(search)}` : ""}`
   )
+export const getLearner = (id: string) => request<LearnerDetail>(`/admin/students/${id}`)
 export const getLimits = () => request<Limits>("/admin/settings")
 export const saveLimits = (limits: Limits) =>
   request<Limits>("/admin/settings", { method: "PUT", body: limits })

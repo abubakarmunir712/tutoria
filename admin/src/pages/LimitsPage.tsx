@@ -10,9 +10,13 @@ export function LimitsPage() {
   const limits = usePoll(getLimits, null)
   const today = usePoll(getOverview, 15_000)
   // What has been typed; until then the form shows the saved limits.
-  const [draft, setDraft] = useState<{ questions?: string; cap?: string }>({})
+  const [draft, setDraft] = useState<{ questions?: string; cap?: string; marking?: string; alert?: string }>({})
   const questions = draft.questions ?? String(limits.data?.dailyQuestionLimit ?? "")
   const cap = draft.cap ?? String(limits.data?.dailyCostCapUsd ?? "")
+  const marking = draft.marking ?? String(limits.data?.dailyMarkingLimit ?? "")
+  const alertAt = draft.alert ?? String(limits.data?.costAlertPercent ?? "")
+  const setMarking = (marking: string) => setDraft((d) => ({ ...d, marking }))
+  const setAlertAt = (alert: string) => setDraft((d) => ({ ...d, alert }))
   const setQuestions = (questions: string) => setDraft((d) => ({ ...d, questions }))
   const setCap = (cap: string) => setDraft((d) => ({ ...d, cap }))
   const [saving, setSaving] = useState(false)
@@ -28,10 +32,14 @@ export function LimitsPage() {
       const next = await saveLimits({
         dailyQuestionLimit: Math.round(Number(questions)),
         dailyCostCapUsd: Number(cap),
+        dailyMarkingLimit: Math.round(Number(marking)),
+        costAlertPercent: Math.round(Number(alertAt)),
       })
       setDraft({
         questions: String(next.dailyQuestionLimit),
         cap: String(next.dailyCostCapUsd),
+        marking: String(next.dailyMarkingLimit),
+        alert: String(next.costAlertPercent),
       })
       setSaved(true)
       void today.reload()
@@ -90,6 +98,39 @@ export function LimitsPage() {
               protects against a surprise bill. 0 turns the cap off.
             </span>
           </label>
+          <label className="block text-sm">
+            AI-marked answers per learner, per day
+            <input
+              className={field}
+              type="number"
+              min={0}
+              step={1}
+              value={marking}
+              onChange={(e) => setMarking(e.target.value)}
+              required
+            />
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Quiz and assignment marking by the AI. Past this, answers are checked offline instead,
+              so practice keeps working but is less precise. 0 turns this limit off.
+            </span>
+          </label>
+          <label className="block text-sm">
+            Warn me when spend reaches (% of the cap)
+            <input
+              className={field}
+              type="number"
+              min={1}
+              max={100}
+              step={1}
+              value={alertAt}
+              onChange={(e) => setAlertAt(e.target.value)}
+              required
+            />
+            <span className="mt-1 block text-xs text-muted-foreground">
+              A warning appears at the top of the Overview tab. Spend jumping to 3 times the usual
+              day, or many failing AI calls, also raise a warning.
+            </span>
+          </label>
           {problem && (
             <p role="alert" className="text-sm text-destructive">
               {problem}
@@ -116,7 +157,7 @@ export function LimitsPage() {
             {pct !== null && pct !== undefined && (
               <div className="mt-2 h-3 rounded-full bg-muted">
                 <div
-                  className={`h-3 rounded-full ${pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-amber-500" : "bg-[#0561e6]"}`}
+                  className={`h-3 rounded-full ${pct >= 100 ? "bg-destructive" : pct >= (today.data?.limits.costAlertPercent ?? 80) ? "bg-amber-500" : "bg-[#0561e6]"}`}
                   style={{ width: `${Math.max(2, pct)}%` }}
                 />
               </div>

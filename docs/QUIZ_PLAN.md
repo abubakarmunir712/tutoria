@@ -60,8 +60,8 @@ Postgres (idempotent; `npm run quiz:seed`).
   nudge + retry. Final → reveals the answer, worked solution and remediation. Last answer finishes
   the attempt and returns the result.
 - `GET  /quiz/attempts/:id` — resume / review.
-- `GET  /quiz/progress?studentId` — mastery overview per subject (Progress tab, parent view).
-- `GET/POST /quiz/assignments/...` — view and submit an assignment.
+- `GET  /quiz/overview?studentId` — mastery per subject (Progress tab, parent view) plus any unfinished attempt for "carry on" on Home.
+- `GET/POST /quiz/topics/:topicId/assignment` — view and submit an assignment.
 
 Points per question: correct first try 1.0, correct on retry 0.6, partial 0.5, wrong 0. Score = sum / count.
 
@@ -90,7 +90,7 @@ about this"). Progress tab gets a mastery section; the parent's child view shows
 
 ## 9. Admin
 
-Overview gets quiz figures (attempts, average score, mastered units); a "Learning" page lists the
+Overview shows quiz figures (finished today/this week, average score, topics mastered) and cost alerts; the Learners tab opens a per-learner panel; a "Learning" page lists the
 hardest units (lowest average score) and the most common misconception tags.
 
 ## 10. Tests / acceptance
