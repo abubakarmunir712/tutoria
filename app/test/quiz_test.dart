@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutoria/core/quiz.dart';
 import 'package:tutoria/features/quiz/mastery_widgets.dart';
 import 'package:tutoria/features/quiz/practice_screen.dart';
 import 'package:tutoria/features/quiz/quiz_screen.dart';
@@ -175,5 +176,39 @@ void main() {
     expect(find.text('Topic mastery'), findsOneWidget);
     expect(find.text('1 of 2 topics secure'), findsOneWidget);
     expect(find.text('Mathematics'), findsOneWidget);
+  });
+
+  testWidgets('a half-done quiz can be carried on from the home screen', (
+    t,
+  ) async {
+    final api = FakeApi(me: studentMe)
+      ..unfinishedQuiz = const UnfinishedQuiz(
+        topicId: 'q-1',
+        topicName: 'Number and place value',
+        subject: 'Mathematics',
+        check: false,
+        answered: 2,
+        total: 5,
+      );
+    await pumpApp(
+      t,
+      const Scaffold(body: UnfinishedQuizCard(learnerId: 'l-ama')),
+      api: api,
+      me: studentMe,
+    );
+    await settle(t);
+
+    expect(find.text('Carry on your quiz'), findsOneWidget);
+    expect(find.textContaining('2 of 5 done'), findsOneWidget);
+  });
+
+  testWidgets('with nothing half-done the card is not shown', (t) async {
+    await pumpApp(
+      t,
+      const Scaffold(body: UnfinishedQuizCard(learnerId: 'l-ama')),
+      me: studentMe,
+    );
+    await settle(t);
+    expect(find.textContaining('Carry on'), findsNothing);
   });
 }

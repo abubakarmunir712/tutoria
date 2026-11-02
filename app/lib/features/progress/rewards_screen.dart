@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/design/design.dart';
 import '../../core/progress.dart';
+import 'leaderboard_screen.dart';
 import 'progress_widgets.dart';
 
 /// Rewards: the learner's level and XP, the badges they have and the ones still to win.
@@ -51,6 +52,37 @@ class RewardsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: TSpace.md),
+              TCard(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LeaderboardScreen(learnerId: learnerId),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const IconBadge(
+                      icon: Icons.leaderboard_rounded,
+                      color: TColors.blue600,
+                      size: 44,
+                    ),
+                    const SizedBox(width: TSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Class leaderboard', style: TText.subheading),
+                          Text(
+                            'See how your week compares',
+                            style: TText.small,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: TColors.ink),
+                  ],
+                ),
+              ),
               const SizedBox(height: TSpace.xl),
               Row(
                 children: [
@@ -85,6 +117,16 @@ class RewardsScreen extends StatelessWidget {
                       Icons.photo_camera_rounded,
                       'Snap your homework',
                       '+15',
+                    ),
+                    _XpRule(
+                      Icons.fact_check_rounded,
+                      'Finish a quiz (up to)',
+                      '+40',
+                    ),
+                    _XpRule(
+                      Icons.edit_note_rounded,
+                      'Hand in an assignment',
+                      '+20',
                     ),
                     _XpRule(
                       Icons.wb_sunny_rounded,

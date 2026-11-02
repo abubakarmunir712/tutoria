@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:tutoria/core/activity.dart';
 import 'package:tutoria/core/api_client.dart';
+import 'package:tutoria/core/conversations.dart';
 import 'package:tutoria/core/design/design.dart';
+import 'package:tutoria/core/leaderboard.dart';
 import 'package:tutoria/core/models.dart';
 import 'package:tutoria/core/photos.dart';
 import 'package:tutoria/core/progress.dart';
@@ -181,6 +183,9 @@ class FakeApi extends ApiClient {
     units: units,
   );
 
+  /// A half-done quiz the mastery overview reports, if any.
+  UnfinishedQuiz? unfinishedQuiz;
+
   @override
   Future<MasteryOverview> masteryOverview(String learnerId) async =>
       MasteryOverview(
@@ -193,6 +198,7 @@ class FakeApi extends ApiClient {
           ),
         ],
         needsRevision: const [],
+        unfinished: unfinishedQuiz,
       );
 
   @override
@@ -303,6 +309,12 @@ class FakeApi extends ApiClient {
   /// The learner, topic and voice flag of the most recent question.
   String? askedBy;
   String? askedTopic;
+  String? askedConversation;
+
+  /// Saved chats the history list offers, and the messages of each by id.
+  var savedChats = <ConversationSummary>[];
+  final savedMessages = <String, List<SavedMessage>>{};
+  final deletedChats = <String>[];
   bool askedAloud = false;
 
   @override
@@ -327,6 +339,49 @@ class FakeApi extends ApiClient {
     required String subject,
   }) async => mathsTopics;
 
+  Leaderboard board = const Leaderboard(
+    top: [
+      BoardRow(rank: 1, name: 'Kwame A.', xp: 60, isYou: false),
+      BoardRow(rank: 2, name: 'Ama M.', xp: 40, isYou: true),
+    ],
+  );
+  final boardVisibility = <bool>[];
+
+  @override
+  Future<Leaderboard> leaderboard(String learnerId) async => board;
+
+  @override
+  Future<void> setLeaderboardVisible(String learnerId, bool visible) async {
+    boardVisibility.add(visible);
+    board = Leaderboard(top: board.top, hidden: !visible);
+  }
+
+  @override
+  Future<List<ConversationSummary>> conversations(
+    String learnerId, {
+    String? subject,
+  }) async => [
+    for (final c in savedChats)
+      if (subject == null || c.subject == subject) c,
+  ];
+
+  @override
+  Future<SavedConversation> conversation(String learnerId, String id) async {
+    final c = savedChats.firstWhere((c) => c.id == id);
+    return SavedConversation(
+      id: id,
+      subject: c.subject,
+      grade: c.grade,
+      messages: savedMessages[id] ?? const [],
+    );
+  }
+
+  @override
+  Future<void> deleteConversation(String learnerId, String id) async {
+    deletedChats.add(id);
+    savedChats = savedChats.where((c) => c.id != id).toList();
+  }
+
   @override
   Future<ChatResponse> askQuestion({
     required String question,
@@ -335,14 +390,17 @@ class FakeApi extends ApiClient {
     List<Map<String, String>>? history,
     String? learnerId,
     String? topic,
+    String? conversationId,
     bool spoken = false,
   }) async {
     asked.add(question);
+    askedConversation = conversationId;
     askedBy = learnerId;
     askedTopic = topic;
     askedAloud = spoken;
     return ChatResponse(
       award: award,
+      conversationId: 'conv-1',
       answer:
           'Great question! Before we start, what do you already know about **fractions**?\n\n'
           'Think of a pizza cut into 8 equal slices. If you eat 3 slices, what fraction did you eat?',

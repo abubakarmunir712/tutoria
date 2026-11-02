@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
+import 'conversations.dart';
+import 'leaderboard.dart';
 import 'models.dart';
 import 'progress.dart';
 import 'quiz.dart';
@@ -32,7 +34,12 @@ class ChatCitation {
 }
 
 class ChatResponse {
-  ChatResponse({required this.answer, required this.citations, this.award});
+  ChatResponse({
+    required this.answer,
+    required this.citations,
+    this.award,
+    this.conversationId,
+  });
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) => ChatResponse(
     answer: json['answer'] as String,
@@ -42,6 +49,7 @@ class ChatResponse {
     award: json['progress'] is Map<String, dynamic>
         ? Award.fromJson(json['progress'] as Map<String, dynamic>)
         : null,
+    conversationId: json['conversationId'] as String?,
   );
 
   final String answer;
@@ -49,6 +57,9 @@ class ChatResponse {
 
   /// What the question earned the learner, when the server was told who asked.
   final Award? award;
+
+  /// The saved conversation this exchange went into, when the server was told who asked.
+  final String? conversationId;
 }
 
 class ApiException implements Exception {
@@ -266,6 +277,69 @@ class ApiClient {
 
   // --- Practice: quizzes, quick checks, assignments and mastery
 
+  // --- Leaderboard
+
+  Future<Leaderboard> leaderboard(String learnerId) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/me/students/$learnerId/leaderboard'),
+        headers: _json(t),
+      ),
+    );
+    return Leaderboard.fromJson(await _decode(res));
+  }
+
+  /// Show or hide the learner on their class board.
+  Future<void> setLeaderboardVisible(String learnerId, bool visible) async {
+    final res = await _authed(
+      (t) => _client.put(
+        _uri('/me/students/$learnerId/leaderboard'),
+        headers: _json(t),
+        body: jsonEncode({'visible': visible}),
+      ),
+    );
+    _decodeBody(res);
+  }
+
+  // --- Saved conversations
+
+  /// A learner's saved tutor chats, newest first.
+  Future<List<ConversationSummary>> conversations(
+    String learnerId, {
+    String? subject,
+  }) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/me/students/$learnerId/conversations', {'subject': ?subject}),
+        headers: _json(t),
+      ),
+    );
+    final body = _decodeBody(res);
+    return (body as List)
+        .map((c) => ConversationSummary.fromJson(c as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<SavedConversation> conversation(String learnerId, String id) async {
+    final res = await _authed(
+      (t) => _client.get(
+        _uri('/me/students/$learnerId/conversations/$id'),
+        headers: _json(t),
+      ),
+    );
+    return SavedConversation.fromJson(await _decode(res));
+  }
+
+  Future<void> deleteConversation(String learnerId, String id) async {
+    final res = await _authed(
+      (t) => _client.delete(
+        _uri('/me/students/$learnerId/conversations/$id'),
+        headers: _json(t),
+      ),
+    );
+    _decodeBody(res);
+  }
+
   /// The practice units for a learner's class in one subject, with how they are getting on.
   Future<PracticeList> practiceUnits({
     required String learnerId,
@@ -389,6 +463,7 @@ class ApiClient {
     List<Map<String, String>>? history,
     String? learnerId,
     String? topic,
+    String? conversationId,
     bool spoken = false,
   }) async {
     final res = await _authed(
@@ -402,6 +477,7 @@ class ApiClient {
           'history': history ?? [],
           'studentId': ?learnerId,
           'topic': ?topic,
+          'conversationId': ?conversationId,
           if (spoken) 'via': 'voice',
         }),
       ),
@@ -416,6 +492,7 @@ class ApiClient {
     List<Map<String, String>>? history,
     String? learnerId,
     String? topic,
+    String? conversationId,
   }) async {
     final res = await _authed((token) async {
       // A multipart request can only be sent once, so each attempt builds its own.
@@ -426,6 +503,9 @@ class ApiClient {
       if (subject != null) request.fields['subject'] = subject;
       if (learnerId != null) request.fields['studentId'] = learnerId;
       if (topic != null) request.fields['topic'] = topic;
+      if (conversationId != null) {
+        request.fields['conversationId'] = conversationId;
+      }
       // Multipart forms carry strings only, so prior turns go as a JSON string.
       if (history != null && history.isNotEmpty) {
         request.fields['history'] = jsonEncode(history);

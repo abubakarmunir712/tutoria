@@ -11,6 +11,7 @@ import '../chat/chat_screen.dart';
 import '../onboarding/subjects_screen.dart';
 import '../progress/progress_widgets.dart';
 import '../progress/rewards_screen.dart';
+import '../quiz/mastery_widgets.dart';
 import '../subjects/subject_screen.dart';
 import 'subject_picker.dart';
 
@@ -188,6 +189,7 @@ class StudentHomeScreen extends StatelessWidget {
                       ),
                       if (hasSubjects) ...[
                         const SizedBox(height: TSpace.xl),
+                        UnfinishedQuizCard(learnerId: learnerId),
                         _ContinueCard(
                           activity: activity,
                           now: clock,

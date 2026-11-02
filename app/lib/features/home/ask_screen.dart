@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/design/design.dart';
+import '../../core/models.dart';
+import '../../core/conversations.dart';
 import '../auth/auth_state.dart';
+import '../chat/chat_screen.dart';
+import '../chat/conversations_screen.dart';
 import 'subject_picker.dart';
 
 /// The Ask tab: three ways to put a question to the tutor.
@@ -10,6 +14,26 @@ class AskScreen extends StatelessWidget {
   const AskScreen({super.key, required this.learnerId});
 
   final String learnerId;
+
+  Future<void> _openHistory(BuildContext context, Learner learner) async {
+    final picked = await Navigator.of(context).push<ConversationSummary>(
+      MaterialPageRoute(
+        builder: (_) => ConversationsScreen(learnerId: learner.id),
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          grade: picked.grade ?? learner.grade,
+          subject: picked.subject,
+          learnerId: learner.id,
+          topic: picked.topic,
+          conversationId: picked.id,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +94,15 @@ class AskScreen extends StatelessWidget {
                 onTap: enabled
                     ? () => openTutorChat(context, learner, camera: true)
                     : null,
+              ),
+              const SizedBox(height: TSpace.md),
+              _AskOption(
+                icon: Icons.history_rounded,
+                accent: TColors.blue600,
+                tint: TColors.blue50,
+                title: 'Past conversations',
+                subtitle: 'Pick up where you left off',
+                onTap: () => _openHistory(context, learner),
               ),
               if (!enabled) ...[
                 const SizedBox(height: TSpace.lg),

@@ -217,6 +217,7 @@ class MasteryOverview {
     required this.summary,
     required this.bySubject,
     required this.needsRevision,
+    this.unfinished,
   });
 
   factory MasteryOverview.fromJson(Map<String, dynamic> json) =>
@@ -229,12 +230,51 @@ class MasteryOverview {
         needsRevision: ((json['needsRevision'] as List?) ?? const [])
             .map((s) => UnitToRevise.fromJson(s as Map<String, dynamic>))
             .toList(),
+        unfinished: json['unfinished'] is Map<String, dynamic>
+            ? UnfinishedQuiz.fromJson(
+                json['unfinished'] as Map<String, dynamic>,
+              )
+            : null,
       );
 
   final String studentId;
   final MasterySummary summary;
   final List<SubjectMastery> bySubject;
   final List<UnitToRevise> needsRevision;
+
+  /// A quiz or quick check left half done, if any.
+  final UnfinishedQuiz? unfinished;
+}
+
+/// A quiz the learner started and has not finished: "carry on" on the home screen.
+@immutable
+class UnfinishedQuiz {
+  const UnfinishedQuiz({
+    required this.topicId,
+    required this.topicName,
+    required this.subject,
+    required this.check,
+    required this.answered,
+    required this.total,
+  });
+
+  factory UnfinishedQuiz.fromJson(Map<String, dynamic> json) => UnfinishedQuiz(
+    topicId: json['topicId'] as String,
+    topicName: json['topicName'] as String,
+    subject: json['subject'] as String,
+    check: json['mode'] == 'CHECK',
+    answered: json['answered'] as int? ?? 0,
+    total: json['total'] as int? ?? 5,
+  );
+
+  final String topicId;
+  final String topicName;
+  final String subject;
+
+  /// A quick check rather than a full quiz.
+  final bool check;
+  final int answered;
+  final int total;
 }
 
 /// One question in a quiz, with what happened so far if the learner already had a go.

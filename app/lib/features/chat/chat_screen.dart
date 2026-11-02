@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/activity.dart';
 import '../../core/api_client.dart';
+import '../../core/conversations.dart';
 import '../../core/design/design.dart';
 import '../../core/grade_labels.dart';
 import '../../core/photos.dart';
@@ -16,6 +17,7 @@ import '../../core/progress.dart';
 import '../../core/voice.dart';
 import '../auth/auth_state.dart';
 import '../progress/reward_toast.dart';
+import 'conversations_screen.dart';
 
 class _ChatMessage {
   _ChatMessage.user(this.text)
@@ -25,6 +27,13 @@ class _ChatMessage {
   _ChatMessage.image(this.imagePath)
     : isUser = true,
       text = null,
+      citations = const [];
+
+  /// A homework photo from an earlier visit: the picture is not kept, so only a note is shown.
+  _ChatMessage.pastPhoto()
+    : isUser = true,
+      text = 'Sent a homework photo',
+      imagePath = null,
       citations = const [];
   _ChatMessage.ai(this.text, this.citations) : isUser = false, imagePath = null;
 
@@ -48,6 +57,7 @@ class ChatScreen extends StatefulWidget {
     this.startWithVoice = false,
     this.learnerId,
     this.topic,
+    this.conversationId,
   });
 
   final String? grade;
@@ -63,6 +73,9 @@ class ChatScreen extends StatefulWidget {
   final String? learnerId;
   final String? topic;
 
+  /// A saved conversation to reopen and carry on.
+  final String? conversationId;
+
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
@@ -75,6 +88,12 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _recording = false;
   bool _transcribing = false;
 
+  /// The saved conversation these messages belong to; set once the server has saved the first
+  /// exchange (or from the start, when reopening an earlier chat).
+  String? _conversationId;
+  bool _loadingHistory = false;
+  String? _historyError;
+
   /// The tutor message being read aloud (or fetched to be), if any.
   int? _speakingIndex;
   bool _loadingSpeech = false;
@@ -83,6 +102,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _voice = context.read<VoiceService>();
+    _conversationId = widget.conversationId;
+    if (_conversationId != null) _loadHistory();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.initialQuestion != null) {
@@ -106,6 +127,80 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   ApiClient get _api => context.read<ApiClient>();
+
+  /// Bring back the messages of a saved conversation.
+  Future<void> _loadHistory() async {
+    final learnerId = widget.learnerId;
+    final id = _conversationId;
+    if (learnerId == null || id == null) return;
+    setState(() {
+      _loadingHistory = true;
+      _historyError = null;
+    });
+    try {
+      final saved = await _api.conversation(learnerId, id);
+      if (!mounted) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(
+            saved.messages.map(
+              (m) => m.isUser
+                  ? (m.hasImage && m.content.isEmpty
+                        ? _ChatMessage.pastPhoto()
+                        : _ChatMessage.user(m.content))
+                  : _ChatMessage.ai(m.content, m.citations),
+            ),
+          );
+      });
+      _jumpToEnd();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _historyError = e.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _historyError =
+              'Could not open this conversation. Check your connection.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingHistory = false);
+    }
+  }
+
+  void _jumpToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      }
+    });
+  }
+
+  /// The history list for this subject; opening a chat from it replaces this one.
+  Future<void> _openHistory() async {
+    final id = widget.learnerId;
+    if (id == null) return;
+    final picked = await Navigator.of(context).push<ConversationSummary>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ConversationsScreen(learnerId: id, subject: widget.subject),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    unawaited(
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            grade: picked.grade ?? widget.grade,
+            subject: picked.subject,
+            learnerId: id,
+            topic: picked.topic,
+            conversationId: picked.id,
+          ),
+        ),
+      ),
+    );
+  }
 
   void _recordActivity() {
     final id = widget.learnerId;
@@ -186,8 +281,10 @@ class _ChatScreenState extends State<ChatScreen> {
         history: history,
         learnerId: widget.learnerId,
         topic: widget.topic,
+        conversationId: _conversationId,
         spoken: spoken,
       );
+      _conversationId = response.conversationId ?? _conversationId;
       _addAiMessage(response.answer, response.citations);
       _celebrate(response.award);
       if (spoken) {
@@ -381,7 +478,9 @@ class _ChatScreenState extends State<ChatScreen> {
         history: history,
         learnerId: widget.learnerId,
         topic: widget.topic,
+        conversationId: _conversationId,
       );
+      _conversationId = response.conversationId ?? _conversationId;
       _addAiMessage(response.answer, response.citations);
       _celebrate(response.award);
     } on ApiException catch (e) {
@@ -405,6 +504,14 @@ class _ChatScreenState extends State<ChatScreen> {
           decoration: const BoxDecoration(gradient: TColors.heroGradient),
         ),
         titleSpacing: 0,
+        actions: [
+          if (widget.learnerId != null)
+            IconButton(
+              tooltip: 'Past conversations',
+              icon: const Icon(Icons.history_rounded),
+              onPressed: _openHistory,
+            ),
+        ],
         title: Row(
           children: [
             IconBadge(
@@ -435,7 +542,29 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty
+            child: _loadingHistory
+                ? const Center(child: CircularProgressIndicator())
+                : _historyError != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(TSpace.page),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _historyError!,
+                            textAlign: TextAlign.center,
+                            style: TText.body,
+                          ),
+                          TextButton(
+                            onPressed: _loadHistory,
+                            child: const Text('Try again'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : _messages.isEmpty
                 ? _EmptyChat(
                     subject: widget.subject,
                     onPrompt: _sendText,

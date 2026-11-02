@@ -5,6 +5,8 @@ import '../../core/api_client.dart';
 import '../../core/design/design.dart';
 import '../../core/progress.dart';
 import '../../core/quiz.dart';
+import '../auth/auth_state.dart';
+import 'quiz_screen.dart';
 
 /// A small coloured label for where a learner stands on a unit.
 class MasteryChip extends StatelessWidget {
@@ -232,6 +234,102 @@ class _SubjectRow extends StatelessWidget {
           const SizedBox(width: TSpace.md),
           Text('${s.done}/${s.total}', style: TText.smallBold),
         ],
+      ),
+    );
+  }
+}
+
+/// "Carry on your quiz" for the home screen: shown only when a quiz or quick check was started
+/// and not finished. Tapping it opens the quiz where the learner left off.
+class UnfinishedQuizCard extends StatefulWidget {
+  const UnfinishedQuizCard({super.key, required this.learnerId});
+
+  final String learnerId;
+
+  @override
+  State<UnfinishedQuizCard> createState() => _UnfinishedQuizCardState();
+}
+
+class _UnfinishedQuizCardState extends State<UnfinishedQuizCard> {
+  UnfinishedQuiz? _quiz;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final o = await context.read<ApiClient>().masteryOverview(
+        widget.learnerId,
+      );
+      if (mounted) setState(() => _quiz = o.unfinished);
+    } catch (_) {
+      // Only a shortcut: if it can't load, the home screen just goes without it.
+    }
+  }
+
+  Future<void> _open(UnfinishedQuiz q) async {
+    final grade = context
+        .read<AuthState>()
+        .learnerById(widget.learnerId)
+        ?.grade;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => QuizScreen(
+          learnerId: widget.learnerId,
+          topicId: q.topicId,
+          subject: q.subject,
+          grade: grade,
+          check: q.check,
+        ),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _quiz;
+    if (q == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TSpace.md),
+      child: TCard(
+        onTap: () => _open(q),
+        color: TColors.blue50,
+        borderColor: Colors.transparent,
+        shadow: false,
+        child: Row(
+          children: [
+            const IconBadge(
+              icon: Icons.play_circle_rounded,
+              color: TColors.blue600,
+              size: 44,
+            ),
+            const SizedBox(width: TSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    q.check
+                        ? 'Carry on your quick check'
+                        : 'Carry on your quiz',
+                    style: TText.subheading,
+                  ),
+                  Text(
+                    '${q.topicName} · ${q.answered} of ${q.total} done',
+                    style: TText.small,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: TColors.ink),
+          ],
+        ),
       ),
     );
   }
