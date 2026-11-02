@@ -19,6 +19,8 @@ export interface Prices {
 // The system prompt and retrieved curriculum records sent with every question.
 export const PROMPT_OVERHEAD_CHARS = 6000;
 const CHARS_PER_TOKEN = 4;
+/** The marking instructions sent with every quiz answer or assignment. */
+export const MARKING_OVERHEAD_CHARS = 1500;
 
 export function pricesFromEnv(
   get: (key: string) => string | undefined,
@@ -57,5 +59,12 @@ export function estimateCost(
       return p.sttPerCall;
     case 'SPEAK':
       return inputChars * p.ttsPerChar;
+    case 'GRADE':
+      // A short marking prompt, much smaller than a tutor turn's curriculum context.
+      return (
+        (((inputChars + MARKING_OVERHEAD_CHARS) / CHARS_PER_TOKEN) * p.inPerM +
+          (outputChars / CHARS_PER_TOKEN) * p.outPerM) /
+        1_000_000
+      );
   }
 }

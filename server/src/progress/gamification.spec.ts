@@ -94,6 +94,10 @@ describe('badges', () => {
     bestStreak: 0,
     subjects: 0,
     level: 1,
+    quizzes: 0,
+    perfectQuizzes: 0,
+    assignments: 0,
+    masteredTopics: 0,
   };
 
   it('has unique codes', () => {
@@ -105,6 +109,17 @@ describe('badges', () => {
       'first_question',
     ]).map((b) => b.code);
     expect(got).toEqual(['questions_10']);
+  });
+
+  it('awards quiz badges', () => {
+    const got = newBadges(
+      { ...facts, quizzes: 1, perfectQuizzes: 1, masteredTopics: 1 },
+      [],
+    ).map((b) => b.code);
+    expect(got).toEqual(
+      expect.arrayContaining(['first_quiz', 'perfect_quiz', 'topic_master']),
+    );
+    expect(got).not.toContain('first_assignment');
   });
 
   it('keeps a streak badge once earned even if the streak later breaks', () => {

@@ -23,6 +23,12 @@ describe('estimateCost', () => {
     expect(estimateCost('TRANSCRIBE', 0, 0, p)).toBe(0.003);
   });
 
+  it('prices marking below a tutor turn, since it carries no curriculum context', () => {
+    const grade = estimateCost('GRADE', 100, 100, p);
+    expect(grade).toBeGreaterThan(0);
+    expect(grade).toBeLessThan(estimateCost('ASK', 100, 100, p));
+  });
+
   it('reads overrides from the environment', () => {
     const custom = pricesFromEnv((k) =>
       k === 'PRICE_STT_PER_CALL' ? '0.01' : undefined,

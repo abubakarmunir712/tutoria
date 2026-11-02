@@ -132,6 +132,79 @@ export class AdminService {
     };
   }
 
+  /** How practice is going: quizzes taken, scores, the hardest units and the mastery spread. */
+  async learning(days = 30, now = new Date()) {
+    const since = windowStart(now, days);
+    const [totals, daily, bySubject, hardest, mastery, assignments] =
+      await Promise.all([
+        this.prisma.$queryRaw<
+          { quizzes: number; checks: number; learners: number; avg: number }[]
+        >(Prisma.sql`
+          SELECT count(*) FILTER (WHERE "mode" = 'QUIZ')::int AS quizzes,
+                 count(*) FILTER (WHERE "mode" = 'CHECK')::int AS checks,
+                 count(DISTINCT "studentId")::int AS learners,
+                 coalesce(avg("score") FILTER (WHERE "mode" = 'QUIZ'), 0)::float AS avg
+          FROM "QuizAttempt" WHERE "finishedAt" >= ${since}`),
+        this.prisma.$queryRaw<{ day: string; quizzes: number; avg: number }[]>(
+          Prisma.sql`
+          SELECT to_char("finishedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+                 count(*)::int AS quizzes, coalesce(avg("score"), 0)::float AS avg
+          FROM "QuizAttempt"
+          WHERE "finishedAt" >= ${since} AND "mode" = 'QUIZ' GROUP BY 1 ORDER BY 1`,
+        ),
+        this.prisma.$queryRaw<
+          { subject: string; quizzes: number; avg: number }[]
+        >(Prisma.sql`
+          SELECT t."subject", count(*)::int AS quizzes, avg(a."score")::float AS avg
+          FROM "QuizAttempt" a JOIN "QuizTopic" t ON t."id" = a."topicId"
+          WHERE a."finishedAt" >= ${since} AND a."mode" = 'QUIZ'
+          GROUP BY 1 ORDER BY 2 DESC`),
+        // Units with a few attempts and the lowest average: where learners struggle most.
+        this.prisma.$queryRaw<
+          {
+            name: string;
+            subject: string;
+            grade: string;
+            quizzes: number;
+            avg: number;
+          }[]
+        >(Prisma.sql`
+          SELECT t."name", t."subject", t."grade"::text AS grade,
+                 count(*)::int AS quizzes, avg(a."score")::float AS avg
+          FROM "QuizAttempt" a JOIN "QuizTopic" t ON t."id" = a."topicId"
+          WHERE a."finishedAt" >= ${since} AND a."mode" = 'QUIZ'
+          GROUP BY t."id" HAVING count(*) >= 3 ORDER BY avg(a."score") ASC LIMIT 8`),
+        this.prisma.topicMastery.groupBy({
+          by: ['state'],
+          _count: { _all: true },
+        }),
+        this.prisma.assignmentSubmission.groupBy({
+          by: ['verdict'],
+          where: { createdAt: { gte: since } },
+          _count: { _all: true },
+        }),
+      ]);
+    const t = totals[0];
+    return {
+      days,
+      totals: {
+        quizzes: t?.quizzes ?? 0,
+        checks: t?.checks ?? 0,
+        learners: t?.learners ?? 0,
+        averageScore: t?.avg ?? 0,
+        assignments: assignments.reduce((n, a) => n + a._count._all, 0),
+      },
+      daily: fillDays(now, days, daily, (day) => ({
+        day,
+        quizzes: 0,
+        avg: 0,
+      })),
+      bySubject,
+      hardest,
+      mastery: mastery.map((m) => ({ state: m.state, units: m._count._all })),
+    };
+  }
+
   /** Usage patterns over the last `days` days: per day, by kind, by subject, by hour. */
   async usage(days = 14, now = new Date()) {
     const since = windowStart(now, days);

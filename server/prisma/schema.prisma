@@ -64,12 +64,15 @@ model Student {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments Enrollment[]
-  stats       StudentStats?
-  events      LearningEvent[]
-  badges      StudentBadge[]
-  usage       UsageLog[]
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  stats        StudentStats?
+  events       LearningEvent[]
+  badges       StudentBadge[]
+  usage        UsageLog[]
+  quizAttempts QuizAttempt[]
+  mastery      TopicMastery[]
+  submissions  AssignmentSubmission[]
 
   @@index([userId])
 }
@@ -111,6 +114,9 @@ enum EventKind {
   QUESTION
   PHOTO
   VOICE
+  QUIZ
+  CHECK
+  ASSIGNMENT
 }
 
 enum UsageKind {
@@ -118,6 +124,7 @@ enum UsageKind {
   ASK_IMAGE
   TRANSCRIBE
   SPEAK
+  GRADE
 }
 
 // One thing a learner did that earned XP (a typed question, a homework photo, a spoken question).
@@ -139,20 +146,24 @@ model LearningEvent {
 
 // Running totals for a learner, so the home screen and dashboards never have to add up events.
 model StudentStats {
-  studentId     String    @id
-  xp            Int       @default(0)
-  questions     Int       @default(0)
-  photos        Int       @default(0)
-  voices        Int       @default(0)
-  streak        Int       @default(0)
-  bestStreak    Int       @default(0)
+  studentId      String    @id
+  xp             Int       @default(0)
+  questions      Int       @default(0)
+  photos         Int       @default(0)
+  voices         Int       @default(0)
+  quizzes        Int       @default(0)
+  perfectQuizzes Int       @default(0)
+  assignments    Int       @default(0)
+  masteredTopics Int       @default(0)
+  streak         Int       @default(0)
+  bestStreak     Int       @default(0)
   // The last UTC calendar day (yyyy-MM-dd) with activity. Ghana is on UTC, so UTC days are
   // the learners' days.
-  lastActiveDay String?
-  lastSubject   String?
-  lastTopic     String?
-  lastActiveAt  DateTime?
-  updatedAt     DateTime  @updatedAt
+  lastActiveDay  String?
+  lastSubject    String?
+  lastTopic      String?
+  lastActiveAt   DateTime?
+  updatedAt      DateTime  @updatedAt
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
@@ -194,4 +205,167 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------------------------
+// Practice units: quizzes, quick checks (diagnostics), assignments and topic mastery. Loaded from
+// the consultant's knowledge base by `npm run quiz:seed` (see docs/QUIZ_PLAN.md).
+// ---------------------------------------------------------------------------------------------
+
+enum QuizMode {
+  QUIZ
+  CHECK
+}
+
+enum QuestionLevel {
+  FOUNDATIONAL
+  UNDERSTANDING
+  APPLICATION
+  REASONING
+  TRANSFER
+}
+
+enum Verdict {
+  CORRECT
+  PARTIAL
+  INCORRECT
+}
+
+// The progression map's states: Not Started -> Emerging -> Developing -> Secure -> Mastered, with
+// Needs Revision for a learner who slips back. "Not started" is the absence of a row.
+enum MasteryState {
+  EMERGING
+  DEVELOPING
+  SECURE
+  MASTERED
+  NEEDS_REVISION
+}
+
+model QuizTopic {
+  id                     String @id @default(uuid())
+  // The pack's record id, e.g. TUT-001. Stable, so re-seeding updates in place.
+  code                   String @unique
+  grade                  Grade
+  subject                String
+  name                   String
+  strand                 String
+  term                   String
+  week                   Int
+  // Position within the grade + subject, in teaching order.
+  order                  Int
+  previousLearning       String
+  nextLearning           String
+  remediation            String
+  alternativeExplanation String
+  prerequisiteRevision   String
+  likelyMisconception    String
+  assignmentTask         String
+  assignmentCriteria     String
+  assignmentReflection   String
+
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+  mastery     TopicMastery[]
+  submissions AssignmentSubmission[]
+
+  @@index([grade, subject, order])
+}
+
+model QuizQuestion {
+  id                String        @id @default(uuid())
+  topicId           String
+  order             Int
+  level             QuestionLevel
+  difficulty        Int
+  question          String
+  expectedAnswer    String
+  variations        String
+  commonWrongAnswer String
+  misconception     String
+  workedSolution    String
+  rubric            String
+  // Also one of the topic's three diagnostic items.
+  diagnostic        Boolean       @default(false)
+
+  topic   QuizTopic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@unique([topicId, order])
+}
+
+model QuizAttempt {
+  id         String    @id @default(uuid())
+  studentId  String
+  topicId    String
+  mode       QuizMode
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  // 0..1 once finished.
+  score      Float?
+  xp         Int       @default(0)
+
+  student Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic   QuizTopic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@index([studentId, topicId])
+  @@index([finishedAt])
+}
+
+model QuizAnswer {
+  id         String   @id @default(uuid())
+  attemptId  String
+  questionId String
+  // The learner's final answer, and how many tries it took (1 or 2).
+  answer     String
+  tries      Int      @default(1)
+  verdict    Verdict
+  points     Float
+  feedback   String   @default("")
+  // Whether the AI service graded it (false: exact match, or the keyword fallback).
+  aiGraded   Boolean  @default(false)
+  // False after a wrong first try (the child may try once more); true when the question is done.
+  settled    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  attempt  QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+}
+
+model TopicMastery {
+  studentId      String
+  topicId        String
+  state          MasteryState
+  attempts       Int          @default(0)
+  bestScore      Float        @default(0)
+  lastScore      Float        @default(0)
+  // How many attempts so far scored 80% or more (Mastered needs two).
+  strongAttempts Int          @default(0)
+  lastAttemptAt  DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  student Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic   QuizTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, topicId])
+  @@index([topicId])
+}
+
+model AssignmentSubmission {
+  id         String   @id @default(uuid())
+  studentId  String
+  topicId    String
+  response   String
+  reflection String   @default("")
+  verdict    Verdict
+  feedback   String   @default("")
+  xp         Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  student Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic   QuizTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, topicId])
 }

@@ -8,6 +8,7 @@ import { StudentsModule } from './students/students.module';
 import { ChatModule } from './chat/chat.module';
 import { AdminModule } from './admin/admin.module';
 import { TrackingModule } from './tracking/tracking.module';
+import { QuizModule } from './quiz/quiz.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TrackingModule } from './tracking/tracking.module';
     StudentsModule,
     TrackingModule,
     ChatModule,
+    QuizModule,
     AdminModule,
   ],
   controllers: [AppController],

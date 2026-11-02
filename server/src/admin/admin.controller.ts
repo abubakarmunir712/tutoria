@@ -25,6 +25,11 @@ export class AdminController {
     return this.admin.usage(q.days);
   }
 
+  @Get('learning')
+  learning(@Query() q: DaysQuery) {
+    return this.admin.learning(q.days);
+  }
+
   @Get('students')
   students(@Query() q: StudentsQuery) {
     return this.admin.students(q);

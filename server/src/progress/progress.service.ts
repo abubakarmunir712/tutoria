@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  ASK_KINDS,
   BADGES,
   BadgeFacts,
   XpAward,
@@ -44,7 +45,15 @@ export class ProgressService {
   /** Add up one learning action: XP, streak, level and any badges it unlocks. */
   async record(
     studentId: string,
-    action: { kind: EventKind; subject: string; topic?: string },
+    action: {
+      kind: EventKind;
+      subject: string;
+      topic?: string;
+      /** What a quiz or assignment earned; tutor questions use the fixed amounts. */
+      baseXp?: number;
+      /** A quiz with every question right. */
+      perfect?: boolean;
+    },
     now = new Date(),
   ): Promise<RecordedProgress> {
     const today = utcDayKey(now);
@@ -68,6 +77,7 @@ export class ProgressService {
         firstOfDay,
         streakAfter: streak,
         eventsToday,
+        baseXp: action.baseXp,
       });
 
       await tx.learningEvent.create({
@@ -82,9 +92,17 @@ export class ProgressService {
       });
 
       const xp = stats.xp + award.total;
-      const questions = stats.questions + 1;
+      const asked = ASK_KINDS.includes(action.kind);
+      const questions = stats.questions + (asked ? 1 : 0);
       const photos = stats.photos + (action.kind === 'PHOTO' ? 1 : 0);
       const voices = stats.voices + (action.kind === 'VOICE' ? 1 : 0);
+      const quizzes = stats.quizzes + (action.kind === 'QUIZ' ? 1 : 0);
+      const perfectQuizzes = stats.perfectQuizzes + (action.perfect ? 1 : 0);
+      const assignments =
+        stats.assignments + (action.kind === 'ASSIGNMENT' ? 1 : 0);
+      const masteredTopics = await tx.topicMastery.count({
+        where: { studentId, state: 'MASTERED' },
+      });
       const bestStreak = Math.max(stats.bestStreak, streak);
 
       const subjects = await tx.learningEvent.findMany({
@@ -104,6 +122,10 @@ export class ProgressService {
         bestStreak,
         subjects: subjects.length,
         level: levelForXp(xp),
+        quizzes,
+        perfectQuizzes,
+        assignments,
+        masteredTopics,
       };
       const earned = newBadges(
         facts,
@@ -123,12 +145,21 @@ export class ProgressService {
           questions,
           photos,
           voices,
+          quizzes,
+          perfectQuizzes,
+          assignments,
+          masteredTopics,
           streak,
           bestStreak,
           lastActiveDay: today,
-          lastSubject: action.subject,
-          lastTopic: action.topic?.slice(0, 120) ?? null,
           lastActiveAt: now,
+          // "Continue learning" reopens the tutor, so only tutor questions set where to resume.
+          ...(asked
+            ? {
+                lastSubject: action.subject,
+                lastTopic: action.topic?.slice(0, 120) ?? null,
+              }
+            : {}),
         },
       });
 
@@ -170,7 +201,11 @@ export class ProgressService {
                      GROUP BY 1 ORDER BY 1`,
         ),
         this.prisma.learningEvent.findMany({
-          where: { studentId, topic: { not: null } },
+          where: {
+            studentId,
+            topic: { not: null },
+            kind: { in: ASK_KINDS },
+          },
           orderBy: { createdAt: 'desc' },
           take: 40,
           select: { subject: true, topic: true, createdAt: true },
@@ -220,6 +255,9 @@ export class ProgressService {
       questions: stats?.questions ?? 0,
       photos: stats?.photos ?? 0,
       voices: stats?.voices ?? 0,
+      quizzes: stats?.quizzes ?? 0,
+      assignments: stats?.assignments ?? 0,
+      masteredTopics: stats?.masteredTopics ?? 0,
       lastSubject: stats?.lastSubject ?? null,
       lastTopic: stats?.lastTopic ?? null,
       lastActiveAt: stats?.lastActiveAt ?? null,

@@ -3,12 +3,19 @@ import { EventKind } from '@prisma/client';
 // All of the game rules live here as plain functions, so they can be tested without a database
 // and changed in one place.
 
-/** XP for one action. Quizzes and assignments will add their own entries. */
+/** XP for one action. Quizzes, quick checks and assignments pay by result instead (see
+ *  quiz/quiz-rules.ts) and pass their amount in; these are only the fallback. */
 export const XP_PER_EVENT: Record<EventKind, number> = {
   QUESTION: 10,
   PHOTO: 15,
   VOICE: 10,
+  QUIZ: 10,
+  CHECK: 5,
+  ASSIGNMENT: 10,
 };
+
+/** The actions that are a question put to the tutor (as opposed to practice). */
+export const ASK_KINDS: EventKind[] = ['QUESTION', 'PHOTO', 'VOICE'];
 
 /** Extra XP for the first thing a learner does each day. */
 export const FIRST_OF_DAY_BONUS = 10;
@@ -86,6 +93,10 @@ export interface BadgeFacts {
   bestStreak: number;
   subjects: number;
   level: number;
+  quizzes: number;
+  perfectQuizzes: number;
+  assignments: number;
+  masteredTopics: number;
 }
 
 export interface BadgeDef {
@@ -157,6 +168,36 @@ export const BADGES: BadgeDef[] = [
     earned: (f) => f.subjects >= 3,
   },
   {
+    code: 'first_quiz',
+    name: 'Quiz Starter',
+    description: 'Finish your first quiz',
+    earned: (f) => f.quizzes >= 1,
+  },
+  {
+    code: 'perfect_quiz',
+    name: 'Perfect Score',
+    description: 'Get every question right in a quiz',
+    earned: (f) => f.perfectQuizzes >= 1,
+  },
+  {
+    code: 'quizzes_10',
+    name: 'Quiz Whiz',
+    description: 'Finish 10 quizzes',
+    earned: (f) => f.quizzes >= 10,
+  },
+  {
+    code: 'topic_master',
+    name: 'Topic Master',
+    description: 'Master a topic',
+    earned: (f) => f.masteredTopics >= 1,
+  },
+  {
+    code: 'first_assignment',
+    name: 'Homework Hero',
+    description: 'Hand in your first assignment',
+    earned: (f) => f.assignments >= 1,
+  },
+  {
     code: 'level_5',
     name: 'Rising Star',
     description: 'Reach level 5',
@@ -183,12 +224,18 @@ export interface XpAward {
 /** What one action earns. `eventsToday` counts XP-earning actions already made today. */
 export function xpFor(
   kind: EventKind,
-  opts: { firstOfDay: boolean; streakAfter: number; eventsToday: number },
+  opts: {
+    firstOfDay: boolean;
+    streakAfter: number;
+    eventsToday: number;
+    /** The action's own XP, when it depends on how well it went (quizzes, assignments). */
+    baseXp?: number;
+  },
 ): XpAward {
   if (opts.eventsToday >= DAILY_XP_EVENT_CAP) {
     return { base: 0, firstOfDay: 0, streak: 0, total: 0 };
   }
-  const base = XP_PER_EVENT[kind];
+  const base = opts.baseXp ?? XP_PER_EVENT[kind];
   const firstOfDay = opts.firstOfDay ? FIRST_OF_DAY_BONUS : 0;
   // Only on the day the streak first reaches the milestone.
   const streak = opts.firstOfDay ? (STREAK_BONUS[opts.streakAfter] ?? 0) : 0;
