@@ -55,7 +55,7 @@ export function App() {
     <div className="flex min-h-svh flex-col bg-[#f6f9ff]">
       <div className="flex w-full flex-1 flex-col md:flex-row">
         <aside className="flex items-center gap-2 bg-white px-4 py-3 md:sticky md:top-0 md:h-svh md:w-24 md:flex-col md:px-0 md:py-8 md:shadow-[4px_0_24px_rgba(2,69,176,0.06)]">
-          <img src="/img/logo_mark.png" alt="Tutoria" className="size-12 rounded-2xl" />
+          <img src={`${import.meta.env.BASE_URL}img/logo_mark.png`} alt="Tutoria" className="size-12 rounded-2xl" />
           <nav className="flex flex-1 items-center justify-center gap-2 md:flex-col md:justify-start md:gap-3 md:pt-10" aria-label="Sections">
             {TABS.map((t) => (
               <a

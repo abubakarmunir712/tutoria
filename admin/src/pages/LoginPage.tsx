@@ -30,7 +30,7 @@ export function LoginPage({ onSignedIn }: { onSignedIn: (name: string) => void }
     <div className="hero flex min-h-svh items-center justify-center p-4">
       <form onSubmit={submit} className="rise w-full max-w-sm space-y-4 rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(2,69,176,0.35)]">
         <div className="text-center">
-          <img src="/img/mascot_hero.png" alt="" className="mx-auto h-28 object-contain" />
+          <img src={`${import.meta.env.BASE_URL}img/mascot_hero.png`} alt="" className="mx-auto h-28 object-contain" />
           <div className="mt-2 text-3xl font-black tracking-tight text-[var(--ink)]">Tutoria</div>
           <span className="mt-1 inline-block rounded-full bg-[#fee517] px-3 py-0.5 text-xs font-extrabold text-[#08185b]">Admin dashboard</span>
         </div>

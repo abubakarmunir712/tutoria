@@ -1,7 +1,9 @@
 // Talks to the Tutoria server. Signs in with the same /auth/login the app uses; the account
 // must be an admin (see `npm run admin:create` in server/) or every /admin call is refused.
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3001"
+// In production the dashboard shares the site's domain and reaches the API through nginx at /api.
+const BASE =
+  (import.meta.env.VITE_API_URL as string | undefined) ?? (import.meta.env.PROD ? "/api" : "http://localhost:3001")
 const KEY = "tutoria-admin-session"
 
 interface Session {

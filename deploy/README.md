@@ -34,7 +34,7 @@ Fill in `.env` with:
 sudo DOMAIN=tutoria.abubakarmunir.dev EMAIL=you@example.com ./deploy/02-deploy.sh
 ```
 
-Builds and starts `server` + `ai-service` via Docker Compose, sets up Nginx as a reverse proxy (only the app port is bound to `127.0.0.1`, Nginx on 80/443 is the real public entry point), and gets an SSL cert via Certbot (auto-renews via the systemd timer Certbot installs).
+Builds the public website (`site/`) and the admin dashboard (`admin/`, in a throwaway Node container, so Docker must be running), starts `server` + `ai-service` via Docker Compose, sets up Nginx as a reverse proxy (only the app port is bound to `127.0.0.1`, Nginx on 80/443 is the real public entry point), and gets an SSL cert via Certbot (auto-renews via the systemd timer Certbot installs).
 
 ## Redeploying after code changes
 
@@ -44,3 +44,13 @@ sudo ./deploy/02-deploy.sh   # DOMAIN/EMAIL only needed again if unset in your s
 ```
 
 `docker compose build` + `up -d` picks up the new code; Nginx/SSL config is untouched (safe to re-run, it's idempotent).
+
+## What is served where
+
+| URL | What |
+|---|---|
+| `/` , `/privacy/` , `/terms/` | The public website (static files from `site/`, served by Nginx from `/var/www/tutoria`) |
+| `/admin/` | The admin dashboard (built from `admin/`). It calls the API at `/api/...`, which Nginx forwards to the server |
+| everything else | The API the mobile app uses, unchanged |
+
+The legal pages contain highlighted `[Insert ...]` placeholders (legal entity name, privacy email, address, phone). Fill them in `site/privacy/index.html` and `site/terms/index.html` and redeploy. The drafts also say they need review by a Ghana-qualified lawyer before publication.
